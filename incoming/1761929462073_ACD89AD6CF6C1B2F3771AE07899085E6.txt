@@ -1,0 +1,20 @@
+mercado
+pago
+Comprobante de transferencia
+Martes, 28 de octubre de 2025 a las 10:39 hs
+$ 106.399
+Motivo: Varios
+De
+Maria Belen Pereyra
+CUIT/CUIL: 27-39471141-7
+Mercado Pago
+CVU: 0000003100125378646686
+Para
+Cobro Express Buenos Aires Sa
+CUIT/CUIL: 30-71605456-6
+Ágil Pagos
+CVU: 0000053600000011234162
+Número de operación de Mercado Pago
+131578733244
+Código de identificación
+PDX4OGNYGRZ1XRJRNOL6EY
