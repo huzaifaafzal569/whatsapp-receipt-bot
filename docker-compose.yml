@@ -40,6 +40,8 @@ services:
       - C_FORCE_ROOT=true
     depends_on:
       - redis
+    env_file:
+      - .env
     volumes:
       - ./credentials.json:/app/credentials.json:ro
       - ./incoming:/app/incoming
@@ -50,6 +52,8 @@ services:
       context: ./listener
       dockerfile: Dockerfile
     container_name: whatsapp_listener
+    env_file:
+      - .env
     depends_on:
       fastapi:
         condition: service_healthy

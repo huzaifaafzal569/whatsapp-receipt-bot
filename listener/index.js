@@ -160,6 +160,10 @@ import pino from 'pino';
 
 
 const API_URL = process.env.API_URL || 'http://localhost:8000/webhook'
+//"http://fastapi_app:8000/webhook"
+//os.getev(API_URL)
+//'http://localhost:8000/webhook'
+// process.env.API_URL ||
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth')
@@ -218,7 +222,8 @@ async function startBot() {
 
             const from = message.key.remoteJid
             const hasImage = !!message.message.imageMessage
-
+            const imageMessage = message.message.imageMessage;
+            const imageUrl = imageMessage.url; // Extract image URL if needed
             // In a group, the actual sender is in message.key.participant
             // If it's a direct chat (which we now ignore), participant will be null/undefined.
             const senderJid = message.key.participant || from;
@@ -283,7 +288,8 @@ async function startBot() {
                         sender_jid: senderJid, // Use the participant JID for sender
                         message_id: message.key.id,
                         group_name: groupName, // Pass the detected group name
-                        sent_at: sentAt
+                        sent_at: sentAt,
+                        image_url: imageUrl
                     });
 
                 } catch (err) {

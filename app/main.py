@@ -221,7 +221,7 @@ async def webhook_receiver(request: Request):
 
         local_image_path = data["local_image_path"]
         sender = data["sender_jid"]
-
+        app.mount("/files", StaticFiles(directory="/app/incoming"), name="files")
         if not os.path.exists(local_image_path):
             raise HTTPException(status_code=404, detail="Image file not found")
 
@@ -230,7 +230,7 @@ async def webhook_receiver(request: Request):
         image_url = f"{PUBLIC_URL}/files/{image_filename}" if image_filename else None
 
         metadata = {
-            "group_name": data.get("from_group", "Unknown Group"),
+            "group_name": data.get("group_name", "Unknown Group"),
             "message_id": data.get("message_id", "N/A"),
             "sender": sender,
             "timestamp": file_stats.st_ctime,

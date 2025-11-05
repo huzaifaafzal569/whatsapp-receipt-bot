@@ -29,7 +29,10 @@ def upload_file_and_get_link(local_path: str, dest_name: Optional[str] = None) -
     Sets permission to 'anyone with the link can view'.
     """
     service = get_drive_service()
-    file_metadata = {'name': dest_name or os.path.basename(local_path)}
+    file_metadata = {
+    'name': dest_name or os.path.basename(local_path),
+    'parents': ['1K9QHRll3PibvO6oHEnJj9Dhcv8jsS1qv']
+}
     media = MediaFileUpload(local_path, resumable=True)
 
     created = service.files().create(

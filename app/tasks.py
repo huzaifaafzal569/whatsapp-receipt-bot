@@ -162,17 +162,28 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     'image_URL': metadata.get('image_url')
     
     }
-    bank_patterns = [
-        r'CBU[:\s]*([0-9]{22})',
-        r'CVU[:\s]*([0-9]{22})',
-        r'Banco\s+([A-Za-z\s]+)',
-        r'Destino[:\s]*([A-Za-z0-9\s]+)'
-    ]
-    for pattern in bank_patterns:
-        match = re.search(pattern,cleaned_text, re.IGNORECASE)
-        if match:
-            extracted_data['Destination_Bank'] = match.group(1).strip()
+    bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad"]
+    bank_number_patterns = [
+    r'CBU[:\s]*([0-9]{22})',
+    r'CVU[:\s]*([0-9]{22})',
+    r'Destino[:\s]*([0-9]{22})'
+]
+
+    extracted_data['Destination_Bank'] = None
+
+# 1️⃣ Try to find bank name first
+    for b in bank_name_patterns:
+        if b.lower() in cleaned_text.lower():
+            extracted_data['Destination_Bank'] = b
             break
+
+# 2️⃣ If no bank name found, look for CBU/CVU number
+    if not extracted_data['Destination_Bank']:
+        for pattern in bank_number_patterns:
+            match = re.search(pattern, cleaned_text, re.IGNORECASE)
+            if match:
+                extracted_data['Destination_Bank'] = match.group(1).strip()
+                break
 
     patterns = {
     # Date: handles both numeric and Spanish text dates
@@ -187,6 +198,12 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
     }
+#     patterns = {
+#     'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
+#     'amount': r'(?:[MB]onto|PESOS|IMPORTE|MONEDA|TOTAL|PAGO|Banto1?)\s*[:$]?\s*([\d.,]+)',
+#     'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m|identificaci[oó]n)[:.\s]*([0-9]{7,11})',
+#     'operation': r'(?:[Nn]\s*de\s*[oc]peraci[oó]n|operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*[:\-]?\s*([A-Z0-9]{6,})',
+# }
 
     if date_match := re.search(patterns['date'], cleaned_text, re.I):
         date_str = date_match.group(1)
@@ -198,7 +215,12 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     if amount_match := re.search(patterns['amount'], cleaned_text, re.I):
         extracted_data['Amount'] = amount_match.group(1).strip()
     else:
-        extracted_data['Amount'] = None
+    # Fallback: try to find a standalone numeric pattern like 400,000.00 or 1.234,56
+        amount_match = re.search(r'(\d{1,3}(?:[.,]\d{3})+[.,]\d{2})', cleaned_text)
+        if amount_match:
+            extracted_data['Amount'] = amount_match.group(1).strip()
+        else:
+            extracted_data['Amount'] = None
 
     # --- Sender CUIT Extraction ---9
     sender_area = cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text
@@ -234,17 +256,17 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     
 
 # --- Upload image to Drive and get link ---
-    try:
-        image_link = upload_file_and_get_link(filename)
-    except Exception as e:
-        logger.warning(f"Drive upload failed: {e}")
-        image_link = None
-
+    # try:
+    #     image_link = upload_file_and_get_link(filename)
+    # except Exception as e:
+    #     logger.warning(f"Drive upload failed: {e}")
+    #     image_link = None
+    image_link = metadata.get('image_url') or ''
     # --- Build final data row for Sheets ---
     row = {
         'Receipt_Date': extracted_data.get('Date') or extracted_data.get('Receipt_Date') or None,
         'Amount': extracted_data.get('Amount'),
-        'Sender_Name': extracted_data.get('Sender_Name'),
+        # 'Sender_Name': extracted_data.get('Sender_Name'),
         'Sender_CUIT': extracted_data.get('Sender_ID') or extracted_data.get('Sender_CUIT'),
         'Receiver_CUIT': extracted_data.get('Receiver_ID') or extracted_data.get('Receiver_CUIT'),
         'Transaction_Number': extracted_data.get('Operation_Number') or extracted_data.get('Transaction_Number'),
@@ -258,7 +280,6 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     sheet_row = [
         row['Receipt_Date'],
         row['Amount'],
-        row['Sender_Name'],
         row['Sender_CUIT'],
         row['Receiver_CUIT'],
         row['Transaction_Number'],
@@ -271,7 +292,7 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     # Call sheet writer. Use environment variable SPREADSHEET_ID in container
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID', 'YOUR_SPREADSHEET_ID')
     try:
-        write_row(SPREADSHEET_ID, sheet_row, sheet_range='Processed!A1')
+        write_row(SPREADSHEET_ID, sheet_row, sheet_range="botnogal!A1")
         logger.info("✅ Wrote row to Google Sheets.")
     except Exception as e:
         logger.error(f"Failed to write to Google Sheets: {e}")

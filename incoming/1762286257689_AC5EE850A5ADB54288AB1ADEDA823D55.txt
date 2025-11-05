@@ -1,0 +1,19 @@
+cuenta
+DNI
+Comprobante de transferencia
+Importe
+$ 146.000,00
+Origen
+Alfredo Bravo Borda
+94.063.646
+Para
+COBRO EXPRESS BUENOS AIRES SA
+Alias: agil.recaudadora
+CUIL: 30716054566
+Motivo
+Varios
+Referencia
+pagos
+Código de referencia
+67REZ8NPQX7KMXKK94KVGO
+22/10/2025 - 14:20:39hs
