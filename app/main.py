@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.responses import PlainTextResponse
-from tasks import process_receipt
+from app.tasks import process_receipt
 from dotenv import load_dotenv
 import uvicorn
 import requests
