@@ -1,5 +1,5 @@
-from utils.drive import upload_file_and_get_link
-from utils.gsheet import write_row
+from app.utils.drive import upload_file_and_get_link
+from app.utils.gsheet import write_row
 from celery import Celery
 import cv2
 import numpy as np
