@@ -186,12 +186,12 @@ async function startBot() {
         if (qr) {
             console.log('📸 QR code detected, saving as qr.png...')
             try {
-                const qrDir = '/tmp/qr'
-                fs.mkdirSync(qrDir, { recursive: true })
-                await qrcode.toFile(`${qrDir}/qr.png`, qr)
-                console.log('✅ QR code saved successfully at', `${qrDir}/qr.png`)
+                const qrDir = '/app/auth/qr'; // persistent disk
+                fs.mkdirSync(qrDir, { recursive: true });
+                await qrcode.toFile(`${qrDir}/qr.png`, qr);
+                console.log('✅ QR code saved successfully at', `${qrDir}/qr.png`);
             } catch (err) {
-                console.error('❌ Failed to save QR code:', err.message)
+                console.error('❌ Failed to save QR code:', err.message);
             }
         }
 
