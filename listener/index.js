@@ -167,6 +167,14 @@ const API_URL = process.env.API_URL || 'http://localhost:8000/webhook'
 
 async function startBot() {
     const authFolder = '/app/auth'
+    if (fs.existsSync(authFolder)) {
+        fs.readdirSync(authFolder).forEach(file => {
+            if (file.endsWith('.json')) { // session files end with .json
+                fs.unlinkSync(`${authFolder}/${file}`);
+            }
+        });
+        console.log('✅ Old session files cleared');
+    }
     const { state, saveCreds } = await useMultiFileAuthState(authFolder)
     // const { state, saveCreds } = await useMultiFileAuthState('auth')
     // Configure logger
@@ -179,6 +187,7 @@ async function startBot() {
         defaultQueryTimeoutMs: 60000,
         retryRequestDelayMs: 1000
     })
+
 
     sock.ev.on('creds.update', saveCreds)
 
