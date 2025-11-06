@@ -120,13 +120,15 @@ async def webhook_receiver(request: Request):
             "timestamp": file_stats.st_ctime,
             "file_size": file_stats.st_size,
             "sent_at": data.get("sent_at"),
-            "image_url": f"{PUBLIC_URL}/files/{os.path.basename(local_path)}"
+            "image_url": f"{PUBLIC_URL}/files/{os.path.basename(local_path)}",
+            "image_filename": os.path.basename(local_path)
         }
-
+        with open(local_path, "rb") as img_file:
+            encoded_image = base64.b64encode(img_file.read()).decode("utf-8")
         logger.info(f"Metadata: {metadata}")
 
         # Queue OCR processing
-        process_receipt.delay(local_path, metadata)
+        process_receipt.delay(encoded_image, metadata)
         logger.info(f"📤 Queued OCR task for {local_path}")
 
         return JSONResponse(content={

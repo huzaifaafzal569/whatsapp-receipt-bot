@@ -10,6 +10,8 @@ import logging
 import json
 from typing import Dict, Any, Optional, List
 import time
+import base64
+import tempfile
 
 # Configure logging
 logging.basicConfig(
@@ -96,33 +98,40 @@ def normalize_amount(raw_amount: str) -> str:
 
 
 @app.task
-def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     """Process receipt image and extract structured data."""
     
     ocr_engine=get_ocr_engine()
     if ocr_engine is None:
         logger.error("❌ OCR Engine is None. Initialization failed globally.")
         return {}
+    
+    # Create a temp file to store the decoded image
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+        image_path = tmp.name
+        tmp.write(base64.b64decode(image_base64))
+    
+    logger.info(f"✅ Temporary image created: {image_path}")
         
-    if not os.path.exists(filename):
-        logger.error(f"File not found: {filename}")
+    if not os.path.exists(image_path):
+        logger.error(f"File not found: {image_path}")
         return {}
 
-    logger.info(f"Processing {filename}...")
+    logger.info(f"Processing {image_path}...")
     
     # 2. Preprocess image
-    preprocessed_img = preprocess_image_for_ocr(filename)
+    preprocessed_img = preprocess_image_for_ocr(image_path)
     if preprocessed_img is None:
-        logger.error(f"Failed to load or preprocess image: {filename}")
+        logger.error(f"Failed to load or preprocess image: {image_path}")
         return {}
 
     # 3. OCR extraction
     result = []
     try:
         logger.info("Running OCR on image...")
-        result = ocr_engine.ocr(filename)
+        result = ocr_engine.ocr(image_path)
     except Exception as e:
-        logger.error(f"OCR failed for {filename}: {str(e)}", exc_info=True)
+        logger.error(f"OCR failed for {image_path}: {str(e)}", exc_info=True)
         return {}
         
     # 4. Extract and Clean Text
@@ -144,7 +153,7 @@ def process_receipt(filename: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     
     # 5. Save the "purest data" (plain text)
     try:
-        text_file = filename.rsplit(".", 1)[0] + ".txt"
+        text_file = image_path.rsplit(".", 1)[0] + ".txt"
         with open(text_file, "w", encoding="utf-8") as f:
             f.write(full_text)
         logger.info(f"Saved OCR text (purest data) to {text_file}")
