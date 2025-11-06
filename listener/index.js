@@ -166,7 +166,9 @@ const API_URL = process.env.API_URL || 'http://localhost:8000/webhook'
 // process.env.API_URL ||
 
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('auth')
+    const authFolder = '/app/auth'
+    const { state, saveCreds } = await useMultiFileAuthState(authFolder)
+    // const { state, saveCreds } = await useMultiFileAuthState('auth')
     // Configure logger
     const logger = pino({ level: 'info' });
     const sock = makeWASocket({
