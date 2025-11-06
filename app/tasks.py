@@ -19,7 +19,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize Celery
-app = Celery('tasks', broker='redis://redis:6379/0')
+# app = Celery('tasks', broker='redis://redis:6379/0')
+BROKER_URL = os.environ.get("REDIS_URL", os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0"))
+app = Celery('tasks', broker=BROKER_URL)
 
 # PaddleOCR initialization with retries
 def initialize_paddle_ocr(max_retries=3, delay=5):

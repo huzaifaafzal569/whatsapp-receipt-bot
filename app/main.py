@@ -91,43 +91,100 @@ async def webhook_receiver(request: Request):
         data = await request.json()
         logger.info(f"Received webhook: {json.dumps(data, indent=2)}")
 
-        local_image_path = data["local_image_path"]
-        sender = data["sender_jid"]
-        # app.mount("/files", StaticFiles(directory="/app/incoming"), name="files")
-        if not os.path.exists(local_image_path):
-            raise HTTPException(status_code=404, detail="Image file not found")
+        # Check if image is sent as Base64
+        if "image_base64" in data:
+            image_filename = data.get("image_filename", "unnamed.jpg")
+            local_path = os.path.join(INCOMING_DIR, image_filename)
 
-        file_stats = os.stat(local_image_path)
-        image_filename = data.get("image_filename")
-        image_url = f"{PUBLIC_URL}/files/{image_filename}" if image_filename else None
+            # Decode and save the image
+            import base64
+            image_bytes = base64.b64decode(data["image_base64"])
+            with open(local_path, "wb") as f:
+                f.write(image_bytes)
+            logger.info(f"✅ Image saved from Base64: {local_path}")
 
+        elif "local_image_path" in data:
+            # Fallback (not recommended on Render)
+            local_path = data["local_image_path"]
+            if not os.path.exists(local_path):
+                raise HTTPException(status_code=404, detail="Image file not found")
+        else:
+            raise HTTPException(status_code=400, detail="No image data provided")
+
+        # Build metadata
+        file_stats = os.stat(local_path)
         metadata = {
             "group_name": data.get("group_name", "Unknown Group"),
             "message_id": data.get("message_id", "N/A"),
-            "sender": sender,
+            "sender": data.get("sender_jid"),
             "timestamp": file_stats.st_ctime,
             "file_size": file_stats.st_size,
             "sent_at": data.get("sent_at"),
-            "image_url": image_url
+            "image_url": f"{PUBLIC_URL}/files/{os.path.basename(local_path)}"
         }
 
         logger.info(f"Metadata: {metadata}")
 
-        process_receipt.delay(local_image_path, metadata)
-        logger.info(f"📤 Queued OCR task for {local_image_path}")
+        # Queue OCR processing
+        process_receipt.delay(local_path, metadata)
+        logger.info(f"📤 Queued OCR task for {local_path}")
 
         return JSONResponse(content={
             "status": "success",
             "message": "Image processed successfully",
-            "filename": local_image_path
+            "filename": local_path
         })
 
-    except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"Missing key: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+# @app.post("/webhook")
+# async def webhook_receiver(request: Request):
+#     """Handle image receipt webhook (from listener or WhatsApp directly)"""
+#     try:
+#         data = await request.json()
+#         logger.info(f"Received webhook: {json.dumps(data, indent=2)}")
+
+#         local_image_path = data["local_image_path"]
+#         sender = data["sender_jid"]
+#         # app.mount("/files", StaticFiles(directory="/app/incoming"), name="files")
+#         if not os.path.exists(local_image_path):
+#             raise HTTPException(status_code=404, detail="Image file not found")
+
+#         file_stats = os.stat(local_image_path)
+#         image_filename = data.get("image_filename")
+#         image_url = f"{PUBLIC_URL}/files/{image_filename}" if image_filename else None
+
+#         metadata = {
+#             "group_name": data.get("group_name", "Unknown Group"),
+#             "message_id": data.get("message_id", "N/A"),
+#             "sender": sender,
+#             "timestamp": file_stats.st_ctime,
+#             "file_size": file_stats.st_size,
+#             "sent_at": data.get("sent_at"),
+#             "image_url": image_url
+#         }
+
+#         logger.info(f"Metadata: {metadata}")
+
+#         process_receipt.delay(local_image_path, metadata)
+#         logger.info(f"📤 Queued OCR task for {local_image_path}")
+
+#         return JSONResponse(content={
+#             "status": "success",
+#             "message": "Image processed successfully",
+#             "filename": local_image_path
+#         })
+
+#     except KeyError as e:
+#         raise HTTPException(status_code=400, detail=f"Missing key: {str(e)}")
+#     except Exception as e:
+#         logger.error(f"Unexpected error: {str(e)}")
+#         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# if __name__ == "__main__":
+    # uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

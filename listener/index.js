@@ -194,17 +194,7 @@ async function startBot() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
 
-        // if (qr) {
-        //     console.log('📸 QR code detected, saving as qr.png...')
-        //     try {
-        //         const qrDir = '/app/auth/qr'; // persistent disk
-        //         fs.mkdirSync(qrDir, { recursive: true });
-        //         await qrcode.toFile(`${qrDir}/qr.png`, qr);
-        //         console.log('✅ QR code saved successfully at', `${qrDir}/qr.png`);
-        //     } catch (err) {
-        //         console.error('❌ Failed to save QR code:', err.message);
-        //     }
-        // }
+
         if (qr) {
             const qrDir = '/app/auth/qr';
             fs.mkdirSync(qrDir, { recursive: true });
@@ -299,17 +289,28 @@ async function startBot() {
                         console.error('Buffer size:', buffer.length)
                         return // Stop processing if file write fails
                     }
+                    const imageBase64 = fs.readFileSync(filename, { encoding: 'base64' });
 
-                    // 3. Post to FastAPI webhook
+                    // Send Base64 to FastAPI
                     await axios.post(API_URL, {
-                        local_image_path: filename,
+                        image_base64: imageBase64,
                         image_filename: `${timestamp}_${message.key.id}.jpg`,
-                        sender_jid: senderJid, // Use the participant JID for sender
+                        sender_jid: senderJid,
                         message_id: message.key.id,
-                        group_name: groupName, // Pass the detected group name
-                        sent_at: sentAt,
-                        image_url: imageUrl
+                        group_name: groupName,
+                        sent_at: sentAt
                     });
+
+                    // // 3. Post to FastAPI webhook
+                    // await axios.post(API_URL, {
+                    //     local_image_path: filename,
+                    //     image_filename: `${timestamp}_${message.key.id}.jpg`,
+                    //     sender_jid: senderJid, // Use the participant JID for sender
+                    //     message_id: message.key.id,
+                    //     group_name: groupName, // Pass the detected group name
+                    //     sent_at: sentAt,
+                    //     image_url: imageUrl
+                    // });
 
                 } catch (err) {
                     console.error('❌ Failed to process image:', err.message)

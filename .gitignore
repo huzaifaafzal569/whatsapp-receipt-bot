@@ -3,7 +3,6 @@
 
 # Ignore credentials and private keys
 credentials.json
-*.json
 
 # Python cache
 __pycache__/
