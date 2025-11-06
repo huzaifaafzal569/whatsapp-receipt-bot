@@ -266,11 +266,11 @@ async function startBot() {
                         }
                     )
                     const timestamp = new Date().getTime()
-                    const filename = `/app/incoming/${timestamp}_${message.key.id}.jpg`
+                    const filename = `/app/auth/incoming/${timestamp}_${message.key.id}.jpg`
 
                     // Ensure directory exists and is writable
-                    if (!fs.existsSync('/app/incoming')) {
-                        fs.mkdirSync('/app/incoming', { recursive: true })
+                    if (!fs.existsSync('/app/auth/incoming')) {
+                        fs.mkdirSync('/app/auth/incoming', { recursive: true })
                     }
 
                     // Save the image
