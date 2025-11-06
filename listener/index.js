@@ -183,18 +183,26 @@ async function startBot() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
 
+        // if (qr) {
+        //     console.log('📸 QR code detected, saving as qr.png...')
+        //     try {
+        //         const qrDir = '/app/auth/qr'; // persistent disk
+        //         fs.mkdirSync(qrDir, { recursive: true });
+        //         await qrcode.toFile(`${qrDir}/qr.png`, qr);
+        //         console.log('✅ QR code saved successfully at', `${qrDir}/qr.png`);
+        //     } catch (err) {
+        //         console.error('❌ Failed to save QR code:', err.message);
+        //     }
+        // }
         if (qr) {
-            console.log('📸 QR code detected, saving as qr.png...')
-            try {
-                const qrDir = '/app/auth/qr'; // persistent disk
-                fs.mkdirSync(qrDir, { recursive: true });
-                await qrcode.toFile(`${qrDir}/qr.png`, qr);
-                console.log('✅ QR code saved successfully at', `${qrDir}/qr.png`);
-            } catch (err) {
-                console.error('❌ Failed to save QR code:', err.message);
-            }
-        }
+            const qrDir = '/app/auth/qr';
+            fs.mkdirSync(qrDir, { recursive: true });
+            await qrcode.toFile(`${qrDir}/qr.png`, qr);
 
+            // Log base64 for scanning
+            const qrBase64 = await qrcode.toDataURL(qr);
+            console.log('📸 QR Code (Base64):', qrBase64);
+        }
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut
