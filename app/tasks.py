@@ -68,7 +68,10 @@ SUPPLIERS = [
     "Prestigio pagos",
     "Plataforma de pago",
     "Aurinegros",
-    "Cobro Express"
+    "Cobro Express",
+    "Cobro Sur",
+    "CLAN SRL",
+    "RAZ Y CIA"
 ]
 DEFAULT_SUPPLIER = "Other"
 
@@ -80,11 +83,11 @@ def detect_supplier(text: str) -> str:
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
-    "Folder_1": ["Transgestiona", "Prestigio pagos", "Plataforma", "Aurinegros", "Cobro Sur"],
-    "Folder_2": ["Cobro Express"],
-    "Folder_3": ["CLAN SRL"],
-    "Folder_4": ["RAZ Y CIA"],
-    "Folder_5": []  # This will catch all others
+    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma", "Aurinegros", "Cobro Sur"],
+    "Cobro_Express": ["Cobro Express"],
+    "Clan": ["CLAN SRL"],
+    "Open": ["RAZ Y CIA"],
+    "Others": []  # This will catch all others
 }
 
 def get_folder_for_supplier(supplier_name: str) -> str:
@@ -229,28 +232,44 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'image_URL': metadata.get('image_url')
     
     }
-    bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad"]
-    bank_number_patterns = [
-    r'CBU[:\s]*([0-9]{22})',
-    r'CVU[:\s]*([0-9]{22})',
-    r'Destino[:\s]*([0-9]{22})'
-]
+    bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoop nova","Agil pagos","Nacion",]
+#     bank_number_patterns = [
+#     r'CBU[:\s]*([0-9]{22})',
+#     r'CVU[:\s]*([0-9]{22})',
+#     r'Destino[:\s]*([0-9]{22})'
+# ]
 
     extracted_data['Destination_Bank'] = None
 
-# 1️⃣ Try to find bank name first
-    for b in bank_name_patterns:
-        if b.lower() in cleaned_text.lower():
-            extracted_data['Destination_Bank'] = b
-            break
+    cleaned_lower = cleaned_text.lower()
 
-# 2️⃣ If no bank name found, look for CBU/CVU number
-    if not extracted_data['Destination_Bank']:
-        for pattern in bank_number_patterns:
-            match = re.search(pattern, cleaned_text, re.IGNORECASE)
-            if match:
-                extracted_data['Destination_Bank'] = match.group(1).strip()
+# 1️⃣ If there's a "para" section, only search within it
+    if "para" in cleaned_lower:
+        after_para = cleaned_lower.split("para", 1)[1]
+        for b in bank_name_patterns:
+            if b.lower() in after_para:
+                extracted_data['Destination_Bank'] = b
                 break
+
+    # 2️⃣ Otherwise, search in full text
+    if not extracted_data['Destination_Bank']:
+        for b in bank_name_patterns:
+            if b.lower() in cleaned_lower:
+                extracted_data['Destination_Bank'] = b
+                break
+# # 1️⃣ Try to find bank name first
+#     for b in bank_name_patterns:
+#         if b.lower() in cleaned_text.lower():
+#             extracted_data['Destination_Bank'] = b
+#             break
+
+# # 2️⃣ If no bank name found, look for CBU/CVU number
+# #     if not extracted_data['Destination_Bank']:
+#     for pattern in bank_number_patterns:
+#         match = re.search(pattern, cleaned_text, re.IGNORECASE)
+#         if match:
+#             extracted_data['Destination_Bank'] = match.group(1).strip()
+#             break
 
     patterns = {
     # Date: handles both numeric and Spanish text dates
@@ -430,11 +449,11 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         logger.error(f"Failed to write to Google Sheets: {e}")
 
 
-    # try:
-    #     os.remove(image_path)
-    #     os.remove(text_file)
-    #     logger.info(f"🗑️ Deleted temporary files: {image_path}, {text_file}")
-    # except Exception as e:
-    #     logger.warning(f"Failed to delete temp files: {e}")
+    try:
+        os.remove(image_path)
+        os.remove(text_file)
+        logger.info(f"🗑️ Deleted temporary files: {image_path}, {text_file}")
+    except Exception as e:
+        logger.warning(f"Failed to delete temp files: {e}")
     return extracted_data
     
