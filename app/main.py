@@ -114,14 +114,16 @@ async def webhook_receiver(request: Request):
         sent_at_str = data.get("sent_at")
         if sent_at_str:
             try:
-        # Clean fractional seconds to microseconds if needed
-                if "." in sent_at_str:
-                    base, frac = sent_at_str.split(".")
-                    frac = (frac + "000000")[:6]  # pad to 6 digits
-                    sent_at_str = f"{base}.{frac}"
+        # Handle both "T" and "Z" formats safely
+                if sent_at_str.endswith("Z"):
+                    sent_at_str = sent_at_str.replace("Z", "")
                 utc_time = datetime.strptime(sent_at_str, "%Y-%m-%dT%H:%M:%S.%f")
+                utc_time = utc_time.replace(tzinfo=pytz.UTC)
+        
                 argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
-                argentina_time = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+                argentina_time = utc_time.astimezone(argentina_tz)
+        
+        # Format cleanly without T or timezone offset
                 sent_at_formatted = argentina_time.strftime("%Y-%m-%d %H:%M:%S")
             except Exception as e:
                 logger.error(f"Failed to convert sent_at: {e}")
