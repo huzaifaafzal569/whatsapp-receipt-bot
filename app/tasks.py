@@ -65,13 +65,13 @@ def get_ocr_engine():
 # Supplier detection
 SUPPLIERS = [
     "Transgestiona",
-    "Prestigio pagos",
-    "Plataforma de pago",
+    "Prestigio_pagos",
+    "Plataforma_de_pago",
     "Aurinegros",
-    "Cobro Express",
-    "Cobro Sur",
+    "Cobro_Express",
+    "Cobro_Sur_Sa",
     "CLAN SRL",
-    "RAZ Y CIA"
+    "RAZ_Y_CIA"
 ]
 DEFAULT_SUPPLIER = "Other"
 
@@ -83,7 +83,7 @@ def detect_supplier(text: str) -> str:
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
-    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma", "Aurinegros", "Cobro Sur"],
+    "Prestigio": ["Transgestiona", "Prestigio_pagos", "Plataforma", "Aurinegros", "Cobro_Sur_Sa"],
     "Cobro_Express": ["Cobro Express"],
     "Clan": ["CLAN SRL"],
     "Open": ["RAZ Y CIA"],
@@ -232,7 +232,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'image_URL': metadata.get('image_url')
     
     }
-    bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoop nova","Agil pagos","Nacion",]
+    bank_name_patterns = ["Hipotecario", "Santander","Santandel", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoop nova","Agil pagos","Nacion",]
 #     bank_number_patterns = [
 #     r'CBU[:\s]*([0-9]{22})',
 #     r'CVU[:\s]*([0-9]{22})',
