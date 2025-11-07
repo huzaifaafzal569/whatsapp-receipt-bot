@@ -1,9 +1,5 @@
 
-
-
-
-
-#new Code 
+# main.py
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +13,8 @@ import os
 import json
 import logging
 from typing import Dict, Any
+from datetime import datetime
+import pytz
 
 # ------------------- Setup -------------------
 
@@ -113,13 +111,25 @@ async def webhook_receiver(request: Request):
 
         # Build metadata
         file_stats = os.stat(local_path)
+        sent_at_str = data.get("sent_at")
+        if sent_at_str:
+            try:
+                utc_time = datetime.strptime(sent_at_str, "%Y-%m-%dT%H:%M:%S.%f")
+                argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
+                argentina_time = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+                sent_at_formatted = argentina_time.strftime("%Y-%m-%d %H:%M:%S")
+            except Exception as e:
+                logger.error(f"Failed to convert sent_at: {e}")
+                sent_at_formatted = sent_at_str
+        else:
+            sent_at_formatted = None
         metadata = {
             "group_name": data.get("group_name", "Unknown Group"),
             "message_id": data.get("message_id", "N/A"),
             "sender": data.get("sender_jid"),
             "timestamp": file_stats.st_ctime,
             "file_size": file_stats.st_size,
-            "sent_at": data.get("sent_at"),
+            "sent_at": sent_at_formatted,
             "image_url": f"{PUBLIC_URL}/files/{os.path.basename(local_path)}",
             "image_filename": os.path.basename(local_path)
         }
