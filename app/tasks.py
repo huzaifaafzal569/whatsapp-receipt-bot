@@ -365,7 +365,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID', '1u3M6OKKg08A0SA_Sz-hhDn4aVmbbG27Rl8msOKFFxpI')
     try:
         # write_row(SPREADSHEET_ID, sheet_row, sheet_range="botnogal!A1")
-        write_row(spreadsheet_id=SPREADSHEET_ID,row_values=sheet_row,sheet_base_name="botnogal",max_rows=5  # Optional: change limit per sheet
+        write_row(spreadsheet_id=SPREADSHEET_ID,row_values=sheet_row,sheet_base_name="botnogal",max_rows=1000  # Optional: change limit per sheet
 )
         logger.info("✅ Wrote row to Google Sheets.")
     except Exception as e:
