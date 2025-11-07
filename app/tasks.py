@@ -204,7 +204,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*([\d.,]+)',
     
     # CUIT: same as before
-    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)[:\s]*([0-9]{2}[-]?[0-9]{8}[-]?[0-9]{1})',
+    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)[:\s]*([0-9]{2}[-]?[0-9]{8}[-]?[0-9]{1})',
+    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
     
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
@@ -216,12 +217,56 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 #     'operation': r'(?:[Nn]\s*de\s*[oc]peraci[oó]n|operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*[:\-]?\s*([A-Z0-9]{6,})',
 # }
 
+    # if date_match := re.search(patterns['date'], cleaned_text, re.I):
+    #     date_str = date_match.group(1)
+    #     date_str = (date_str.replace(',', '')
+    #                         .replace(' de ', '/')
+    #                         .replace(' ', '/'))
+    #     extracted_data['Receipt_Date'] = date_str.strip()
+
     if date_match := re.search(patterns['date'], cleaned_text, re.I):
-        date_str = date_match.group(1)
-        date_str = (date_str.replace(',', '')
-                            .replace(' de ', '/')
-                            .replace(' ', '/'))
-        extracted_data['Receipt_Date'] = date_str.strip()
+        date_str = date_match.group(1).strip().lower()
+        # Convert Spanish month names to numbers
+        months = {
+            "enero": "01", "febrero": "02", "marzo": "03", "abril": "04",
+            "mayo": "05", "junio": "06", "julio": "07", "agosto": "08",
+            "septiembre": "09", "setiembre": "09", "octubre": "10",
+            "noviembre": "11", "diciembre": "12",
+            "ene": "01", "feb": "02", "mar": "03", "abr": "04", "may": "05",
+            "jun": "06", "jul": "07", "ago": "08", "sep": "09", "oct": "10",
+            "nov": "11", "dic": "12"
+        }
+
+        # Try to normalize date
+        try:
+            # Example: "06 de noviembre de 2025"
+            parts = re.findall(r"(\d{1,2})\D+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\D+(\d{4})", date_str)
+            if parts:
+                day, month_abbr, year = parts[0]
+                month = months.get(month_abbr, "01")
+                formatted_date = f"{year}-{month}-{int(day):02d}"
+            else:
+                # fallback for numeric formats like 06/11/2025 or 6-11-25
+                d = re.findall(r"\d{1,2}", date_str)
+                y = re.findall(r"\d{2,4}", date_str)
+                if len(d) >= 2 and y:
+                    day = d[0]
+                    month = d[1]
+                    year = y[-1]
+                    if len(year) == 2:
+                        year = f"20{year}"
+                    formatted_date = f"{year}-{int(month):02d}-{int(day):02d}"
+                else:
+                    formatted_date = date_str
+
+            extracted_data['Receipt_Date'] = formatted_date
+        except Exception as e:
+            logger.warning(f"Date parsing failed: {e}")
+            extracted_data['Receipt_Date'] = date_str
+    else:
+        extracted_data['Receipt_Date'] = None
+    
+    
 
     if amount_match := re.search(patterns['amount'], cleaned_text, re.I):
         extracted_data['Amount'] = amount_match.group(1).strip()
@@ -234,22 +279,37 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             extracted_data['Amount'] = None
 
     # --- Sender CUIT Extraction ---9
-    sender_area = cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text
+    sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
     if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-        extracted_data['Sender_CUIT'] = sender_match.group(1).replace('-', '')
+        extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
     else:
         extracted_data['Sender_CUIT'] = None
 
-    # --- Receiver CUIT Extraction ---
-    receiver_area = cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text
+    receiver_area = re.sub(r'\s+', ' ', cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text)
     if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
-        r_id = receiver_match.group(1).replace('-', '')
+        r_id = re.sub(r'\D', '', receiver_match.group(1))
         if r_id and r_id != extracted_data.get('Sender_CUIT'):
             extracted_data['Receiver_CUIT'] = r_id
         else:
             extracted_data['Receiver_CUIT'] = None
     else:
         extracted_data['Receiver_CUIT'] = None
+    # sender_area = cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text
+    # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
+    #     extracted_data['Sender_CUIT'] = sender_match.group(1).replace('-', '')
+    # else:
+    #     extracted_data['Sender_CUIT'] = None
+
+    # # --- Receiver CUIT Extraction ---
+    # receiver_area = cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text
+    # if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
+    #     r_id = receiver_match.group(1).replace('-', '')
+    #     if r_id and r_id != extracted_data.get('Sender_CUIT'):
+    #         extracted_data['Receiver_CUIT'] = r_id
+    #     else:
+    #         extracted_data['Receiver_CUIT'] = None
+    # else:
+    #     extracted_data['Receiver_CUIT'] = None
 
     # --- Transaction / Operation Number ---
     if op_match := re.search(patterns['operation'], cleaned_text, re.I):
