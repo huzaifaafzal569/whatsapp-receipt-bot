@@ -138,7 +138,7 @@ def write_row(spreadsheet_id: str, row_values: List[str], sheet_base_name: str =
 
         # Write headers in the new sheet
         headers = [
-            "Receipt_Date", "Amount", "Sender_Name", "Sender_CUIT",
+            "Receipt_Date", "Amount", "Sender_CUIT",
             "Receiver_CUIT", "Transaction_Number", "Destination_Bank",
             "WhatsApp_Group", "Receipt_Sent_Time", "Image_Link"
         ]
