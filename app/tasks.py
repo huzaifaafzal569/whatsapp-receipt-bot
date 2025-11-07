@@ -1,4 +1,4 @@
-from app.utils.drive import upload_file_and_get_link
+from app.utils.drive import upload_file_and_get_link, get_drive_service, get_or_create_folder
 from app.utils.gsheet import write_row
 from celery import Celery
 import cv2
@@ -59,6 +59,24 @@ def get_ocr_engine():
     if ocr_engine is None:
         ocr_engine = initialize_paddle_ocr()
     return ocr_engine
+
+# Supplier detection
+SUPPLIERS = [
+    "Transgestiona",
+    "Prestigio pagos",
+    "Plataforma",
+    "Aurinegros",
+    "Cobro Express"
+]
+DEFAULT_SUPPLIER = "Other"
+
+def detect_supplier(text: str) -> str:
+    text_lower = text.lower()
+    for supplier in SUPPLIERS:
+        if supplier.lower() in text_lower:
+            return supplier
+    return DEFAULT_SUPPLIER
+
 
 def extract_text_from_result(page_results: List[Any]) -> List[str]:
     """
@@ -160,6 +178,20 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     except Exception as e:
         logger.warning(f"Failed to save text file: {e}")
 
+    # --- Detect supplier ---
+    supplier = detect_supplier(cleaned_text)
+    logger.info(f"Detected supplier: {supplier}")
+
+    # --- Upload to Drive ---
+    DRIVE_PARENT_FOLDER_ID = os.environ.get("DRIVE_FOLDER_ID")
+    try:
+        drive_service = get_drive_service()
+        # folder_id = get_or_create_folder(drive_service, DRIVE_PARENT_FOLDER_ID, supplier)
+        image_link = upload_file_and_get_link(local_path=image_path, dest_name=os.path.basename(image_path), supplier_folder=supplier)
+    except Exception as e:
+        logger.warning(f"Drive upload failed: {e}")
+        image_link = None
+
     # 6. Data Extraction
     extracted_data = {
     'Receipt_Date': None,
@@ -168,6 +200,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'Receiver_CUIT': None,
     'Transaction_Number': None,
     'Destination_Bank': None,
+    'Supplier': supplier,
     'WhatsApp_Group': metadata.get('group_name', 'Direct Chat'),
     'Receipt_Sent_Time': metadata.get('sent_at'),
     'image_URL': metadata.get('image_url')
@@ -328,7 +361,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
 # --- Upload image to Drive and get link ---
     try:
-        image_link = upload_file_and_get_link(image_path)
+        image_link = upload_file_and_get_link(local_path=image_path, dest_name=os.path.basename(image_path), supplier_folder=supplier)
         extracted_data['image_URL'] = image_link
     except Exception as e:
         logger.warning(f"Drive upload failed: {e}")
@@ -342,6 +375,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         'Sender_CUIT': extracted_data.get('Sender_ID') or extracted_data.get('Sender_CUIT'),
         'Receiver_CUIT': extracted_data.get('Receiver_ID') or extracted_data.get('Receiver_CUIT'),
         'Transaction_Number': extracted_data.get('Operation_Number') or extracted_data.get('Transaction_Number'),
+        'Supplier': extracted_data.get('Supplier'),
         'Destination_Bank': extracted_data.get('Destination_Bank'),
         'WhatsApp_Group': metadata.get('group_name') or metadata.get('from_group') or 'Unknown Group',
         'Receipt_Sent_Time': metadata.get('sent_at') or metadata.get('timestamp') or time.time(),
@@ -355,6 +389,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         row['Sender_CUIT'],
         row['Receiver_CUIT'],
         row['Transaction_Number'],
+        row['Supplier'],
         row['Destination_Bank'],
         row['WhatsApp_Group'],
         row['Receipt_Sent_Time'],
