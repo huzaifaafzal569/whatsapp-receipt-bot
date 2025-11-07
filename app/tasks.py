@@ -267,12 +267,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     
 
 # --- Upload image to Drive and get link ---
-    # try:
-    #     image_link = upload_file_and_get_link(filename)
-    # except Exception as e:
-    #     logger.warning(f"Drive upload failed: {e}")
-    #     image_link = None
-    image_link = metadata.get('image_url') or ''
+    try:
+        image_link = upload_file_and_get_link(image_path)
+    except Exception as e:
+        logger.warning(f"Drive upload failed: {e}")
+        image_link = None
+    # image_link = metadata.get('image_url') or ''
     # --- Build final data row for Sheets ---
     row = {
         'Receipt_Date': extracted_data.get('Date') or extracted_data.get('Receipt_Date') or None,
@@ -308,26 +308,4 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     except Exception as e:
         logger.error(f"Failed to write to Google Sheets: {e}")
     return extracted_data
-    # # 7. Pattern Matching...
-    # if date_match := re.search(patterns['date'], cleaned_text, re.I):
-    #     extracted_data['Date'] = date_match.group(1).replace(' de ', '/').replace(' ', '/')
-
-    # if amount_match := re.search(patterns['amount'], cleaned_text, re.I):
-    #     extracted_data['Amount'] = normalize_amount(amount_match.group(1))
-
-    # sender_area = cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text
-    # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-    #     extracted_data['Sender_ID'] = sender_match.group(1).replace('-', '')
-
-    # receiver_area = cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text
-    # if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
-    #     r_id = receiver_match.group(1).replace('-', '')
-    #     if r_id and r_id != extracted_data['Sender_ID']:
-    #         extracted_data['Receiver_ID'] = r_id
-
-    # if op_match := re.search(patterns['operation'], cleaned_text, re.I):
-    #     extracted_data['Operation_Number'] = op_match.group(1).strip().replace('-', '')
-
-    # logger.info("Extraction complete")
-    # logger.info(json.dumps(extracted_data, indent=4))
-    # return extracted_data
+    
