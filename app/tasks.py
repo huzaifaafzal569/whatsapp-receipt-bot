@@ -237,13 +237,19 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 #     r'CBU[:\s]*([0-9]{22})',
 #     r'CVU[:\s]*([0-9]{22})', 
 #     r'Destino[:\s]*([0-9]{22})'
-# ]
+# ]    
+    BANK_NAME_NORMALIZATION = {
+    "agil": "Agil Pagos",
+    "agilpagos": "Agil Pagos",
+    "ágil pagos": "Agil Pagos",
+    "santandel": "Santander",
+    "credicoopnova": "Credicoop",
+}
 
     extracted_data['Destination_Bank'] = None
-
     cleaned_lower = cleaned_text.lower()
 
-# 1️⃣ If there's a "para" section, only search within it
+    # 1️⃣ If there's a "para" section, only search within it
     if "para" in cleaned_lower:
         after_para = cleaned_lower.split("para", 1)[1]
         for b in bank_name_patterns:
@@ -257,6 +263,15 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             if b.lower() in cleaned_lower:
                 extracted_data['Destination_Bank'] = b
                 break
+
+    if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower() == "cobro express":
+        extracted_data['Destination_Bank'] = "Agil Pagos"
+
+    bank_detected = extracted_data.get('Destination_Bank')
+    if bank_detected:
+        normalized = BANK_NAME_NORMALIZATION.get(bank_detected.lower().strip())
+        if normalized:
+            extracted_data['Destination_Bank'] = normalized
 # # 1️⃣ Try to find bank name first
 #     for b in bank_name_patterns:
 #         if b.lower() in cleaned_text.lower():
