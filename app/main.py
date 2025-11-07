@@ -114,6 +114,11 @@ async def webhook_receiver(request: Request):
         sent_at_str = data.get("sent_at")
         if sent_at_str:
             try:
+        # Clean fractional seconds to microseconds if needed
+                if "." in sent_at_str:
+                    base, frac = sent_at_str.split(".")
+                    frac = (frac + "000000")[:6]  # pad to 6 digits
+                    sent_at_str = f"{base}.{frac}"
                 utc_time = datetime.strptime(sent_at_str, "%Y-%m-%dT%H:%M:%S.%f")
                 argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
                 argentina_time = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
@@ -152,51 +157,3 @@ async def webhook_receiver(request: Request):
         raise HTTPException(status_code=500, detail="Internal server error")
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
-# @app.post("/webhook")
-# async def webhook_receiver(request: Request):
-#     """Handle image receipt webhook (from listener or WhatsApp directly)"""
-#     try:
-#         data = await request.json()
-#         logger.info(f"Received webhook: {json.dumps(data, indent=2)}")
-
-#         local_image_path = data["local_image_path"]
-#         sender = data["sender_jid"]
-#         # app.mount("/files", StaticFiles(directory="/app/incoming"), name="files")
-#         if not os.path.exists(local_image_path):
-#             raise HTTPException(status_code=404, detail="Image file not found")
-
-#         file_stats = os.stat(local_image_path)
-#         image_filename = data.get("image_filename")
-#         image_url = f"{PUBLIC_URL}/files/{image_filename}" if image_filename else None
-
-#         metadata = {
-#             "group_name": data.get("group_name", "Unknown Group"),
-#             "message_id": data.get("message_id", "N/A"),
-#             "sender": sender,
-#             "timestamp": file_stats.st_ctime,
-#             "file_size": file_stats.st_size,
-#             "sent_at": data.get("sent_at"),
-#             "image_url": image_url
-#         }
-
-#         logger.info(f"Metadata: {metadata}")
-
-#         process_receipt.delay(local_image_path, metadata)
-#         logger.info(f"📤 Queued OCR task for {local_image_path}")
-
-#         return JSONResponse(content={
-#             "status": "success",
-#             "message": "Image processed successfully",
-#             "filename": local_image_path
-#         })
-
-#     except KeyError as e:
-#         raise HTTPException(status_code=400, detail=f"Missing key: {str(e)}")
-#     except Exception as e:
-#         logger.error(f"Unexpected error: {str(e)}")
-#         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-# if __name__ == "__main__":
-    # uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
