@@ -320,7 +320,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # Add WhatsApp metadata placeholders (filled by main.py)
     extracted_data['WhatsApp_Group'] = metadata.get('group_name')#, 'Direct Chat')
     extracted_data['Receipt_Sent_Time'] = metadata.get('sent_at')
-    extracted_data['image_URL'] = metadata.get('image_url')
+    # extracted_data['image_URL'] = metadata.get('image_url')
 
     logger.info("Extraction complete")
     logger.info(json.dumps(extracted_data, indent=4))
@@ -329,9 +329,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 # --- Upload image to Drive and get link ---
     try:
         image_link = upload_file_and_get_link(image_path)
+        extracted_data['image_URL'] = image_link
     except Exception as e:
         logger.warning(f"Drive upload failed: {e}")
-        image_link = None
+        extracted_data['image_URL'] = None
     # image_link = metadata.get('image_url') or ''
     # --- Build final data row for Sheets ---
     row = {
@@ -344,7 +345,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         'Destination_Bank': extracted_data.get('Destination_Bank'),
         'WhatsApp_Group': metadata.get('group_name') or metadata.get('from_group') or 'Unknown Group',
         'Receipt_Sent_Time': metadata.get('sent_at') or metadata.get('timestamp') or time.time(),
-        'Image_Link': image_link or ''
+        'Image_Link': extracted_data.get('image_URL') or ''
     }
 
     # Map to sheet order (adjust columns / order to match sheet)
@@ -367,5 +368,13 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         logger.info("✅ Wrote row to Google Sheets.")
     except Exception as e:
         logger.error(f"Failed to write to Google Sheets: {e}")
+
+
+    # try:
+    #     os.remove(image_path)
+    #     os.remove(text_file)
+    #     logger.info(f"🗑️ Deleted temporary files: {image_path}, {text_file}")
+    # except Exception as e:
+    #     logger.warning(f"Failed to delete temp files: {e}")
     return extracted_data
     
