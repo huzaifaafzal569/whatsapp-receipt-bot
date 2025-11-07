@@ -60,11 +60,13 @@ def get_ocr_engine():
         ocr_engine = initialize_paddle_ocr()
     return ocr_engine
 
+
+
 # Supplier detection
 SUPPLIERS = [
     "Transgestiona",
     "Prestigio pagos",
-    "Plataforma",
+    "Plataforma de pago",
     "Aurinegros",
     "Cobro Express"
 ]
@@ -76,6 +78,23 @@ def detect_supplier(text: str) -> str:
         if supplier.lower() in text_lower:
             return supplier
     return DEFAULT_SUPPLIER
+
+FOLDER_GROUPS = {
+    "Folder_1": ["Transgestiona", "Prestigio pagos", "Plataforma", "Aurinegros", "Cobro Sur"],
+    "Folder_2": ["Cobro Express"],
+    "Folder_3": ["CLAN SRL"],
+    "Folder_4": ["RAZ Y CIA"],
+    "Folder_5": []  # This will catch all others
+}
+
+def get_folder_for_supplier(supplier_name: str) -> str:
+    """Return the folder name for a given supplier."""
+    supplier_lower = supplier_name.lower()
+    for folder, suppliers in FOLDER_GROUPS.items():
+        for s in suppliers:
+            if s.lower() in supplier_lower:
+                return folder
+    return "Folder_5"
 
 
 def extract_text_from_result(page_results: List[Any]) -> List[str]:
@@ -186,8 +205,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     DRIVE_PARENT_FOLDER_ID = os.environ.get("DRIVE_FOLDER_ID")
     try:
         drive_service = get_drive_service()
-        # folder_id = get_or_create_folder(drive_service, DRIVE_PARENT_FOLDER_ID, supplier)
-        image_link = upload_file_and_get_link(local_path=image_path, dest_name=os.path.basename(image_path), supplier_folder=supplier)
+        folder_name = get_folder_for_supplier(supplier)
+        image_link = upload_file_and_get_link(
+            local_path=image_path,
+            dest_name=os.path.basename(image_path),
+            supplier_folder=folder_name  # now points to the correct folder group
+    )
     except Exception as e:
         logger.warning(f"Drive upload failed: {e}")
         image_link = None
@@ -361,7 +384,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
 # --- Upload image to Drive and get link ---
     try:
-        image_link = upload_file_and_get_link(local_path=image_path, dest_name=os.path.basename(image_path), supplier_folder=supplier)
+        image_link = upload_file_and_get_link(local_path=image_path, dest_name=os.path.basename(image_path), supplier_folder=folder_name)
         extracted_data['image_URL'] = image_link
     except Exception as e:
         logger.warning(f"Drive upload failed: {e}")
