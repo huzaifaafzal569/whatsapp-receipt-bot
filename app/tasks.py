@@ -341,7 +341,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 5) Special rule you wanted: if supplier == "Cobro Express" and no 'para' use Agil Pagos
     if not extracted_data['Destination_Bank']:
-        if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower()=="cobro express":
+        if extracted_data.get('Supplier', '').lower()=="cobro express buenos aires sa" or extracted_data.get('Supplier', '').lower()=="cobro express":
             extracted_data['Destination_Bank'] = "Agil Pagos"
             logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
 
