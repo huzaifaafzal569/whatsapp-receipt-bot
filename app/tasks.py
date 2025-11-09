@@ -331,10 +331,11 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 4) Fallback: text-based bank detection (your existing list)
     if not extracted_data['Destination_Bank']:
+        after_para = cleaned_lower.split("para", 1)[1]
         bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro",
                             "BBVA", "ICBC", "Ciudad", "Credicoop", "Agil Pagos", "Nacion"]
         for b in bank_name_patterns:
-            if b.lower() in cleaned_lower:
+            if b.lower() in after_para:
                 extracted_data['Destination_Bank'] = b
                 logger.info(f"text match -> bank:{b}")
                 break
@@ -356,13 +357,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
                 bank_code = cbu[:3]
                 code = norm_code(bank_code)
                 extracted_data['Destination_Bank'] = destino_map.get(code)
-
-                # 2️⃣ Also check if a bank name appears in the same text
-                bank_name_patterns = None
-                for b in bank_name_patterns:
-                    if b.lower() in after_para:
-                        extracted_data['Destination_Bank'] = b
-                        break
+                logger.info(f"'para' section 22-digit CBU found -> bank_code:{bank_code} normalized:{code} bank:{extracted_data['Destination_Bank']}")
 
         # 2️⃣ Otherwise, search in full text
     if not extracted_data['Destination_Bank']:
