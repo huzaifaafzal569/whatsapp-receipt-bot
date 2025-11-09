@@ -232,59 +232,62 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'image_URL': metadata.get('image_url')
     
     }
-    bank_name_patterns = ["Hipotecario", "Santander","Santandel", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoopnova","Agilpagos","Ágil Pagos","Agil","Nacion",]
-#     bank_number_patterns = [
-#     r'CBU[:\s]*([0-9]{22})',
-#     r'CVU[:\s]*([0-9]{22})', 
-#     r'Destino[:\s]*([0-9]{22})'
-# ]    
-    BANK_NAME_NORMALIZATION = {
-    "agil": "Agil Pagos",
-    "agilpagos": "Agil Pagos",
-    "ágil pagos": "Agil Pagos",
-    "santandel": "Santander",
-    "credicoopnova": "Credicoop",
-}
+#     bank_name_patterns = ["Hipotecario", "Santander","Santandel", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoopnova","Agilpagos","Ágil Pagos","Agil","Nacion",]
+# #     bank_number_patterns = [
+# #     r'CBU[:\s]*([0-9]{22})',
+# #     r'CVU[:\s]*([0-9]{22})', 
+# #     r'Destino[:\s]*([0-9]{22})'
+# # ]    
+#     BANK_NAME_NORMALIZATION = {
+#     "agil": "Agil Pagos",
+#     "agilpagos": "Agil Pagos",
+#     "ágil pagos": "Agil Pagos",
+#     "santandel": "Santander",
+#     "credicoopnova": "Credicoop",
+# }
 
+#     extracted_data['Destination_Bank'] = None
+#     cleaned_lower = cleaned_text.lower()
+
+#     # 1️⃣ If there's a "para" section, only search within it
+#     if "para" in cleaned_lower:
+#         after_para = cleaned_lower.split("para", 1)[1]
+#         for b in bank_name_patterns:
+#             if b.lower() in after_para:
+#                 extracted_data['Destination_Bank'] = b
+#                 break
+
+#     # 2️⃣ Otherwise, search in full text
+#     if not extracted_data['Destination_Bank']:
+#         for b in bank_name_patterns:
+#             if b.lower() in cleaned_lower:
+#                 extracted_data['Destination_Bank'] = b
+#                 break
+
+#     if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower() == "cobro express":
+#         extracted_data['Destination_Bank'] = "Agil Pagos"
+
+#     bank_detected = extracted_data.get('Destination_Bank')
+#     if bank_detected:
+#         normalized = BANK_NAME_NORMALIZATION.get(bank_detected.lower().strip())
+#         if normalized:
+#             extracted_data['Destination_Bank'] = normalized
     extracted_data['Destination_Bank'] = None
     cleaned_lower = cleaned_text.lower()
 
-    # 1️⃣ If there's a "para" section, only search within it
-    if "para" in cleaned_lower:
-        after_para = cleaned_lower.split("para", 1)[1]
-        for b in bank_name_patterns:
-            if b.lower() in after_para:
-                extracted_data['Destination_Bank'] = b
-                break
-
-    # 2️⃣ Otherwise, search in full text
-    if not extracted_data['Destination_Bank']:
-        for b in bank_name_patterns:
-            if b.lower() in cleaned_lower:
-                extracted_data['Destination_Bank'] = b
-                break
-
-    if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower() == "cobro express":
-        extracted_data['Destination_Bank'] = "Agil Pagos"
-
-    bank_detected = extracted_data.get('Destination_Bank')
-    if bank_detected:
-        normalized = BANK_NAME_NORMALIZATION.get(bank_detected.lower().strip())
-        if normalized:
-            extracted_data['Destination_Bank'] = normalized
-# # 1️⃣ Try to find bank name first
-#     for b in bank_name_patterns:
-#         if b.lower() in cleaned_text.lower():
-#             extracted_data['Destination_Bank'] = b
-#             break
-
-# # 2️⃣ If no bank name found, look for CBU/CVU number
-# #     if not extracted_data['Destination_Bank']:
-#     for pattern in bank_number_patterns:
-#         match = re.search(pattern, cleaned_text, re.IGNORECASE)
-#         if match:
-#             extracted_data['Destination_Bank'] = match.group(1).strip()
-#             break
+    # Find numeric destino code (3–7 digits, usually after "destino" or "cbu")
+    destino_match = re.search(r'(?:destino|cbu|cvu)[:\s]*0*([0-9]{3,7})', cleaned_lower)
+    if destino_match:
+        destino_code = destino_match.group(1)
+        destino_map = {
+            "007": "Galicia",
+            "285": "Macro",
+            "191": "Credicoop Nueva",
+            "0000053": "Agil Pagos",
+            "044": "Hipotecario",
+            "011": "Nacion"
+        }
+        extracted_data['Destination_Bank'] = destino_map.get(destino_code, None)
 
     patterns = {
     # Date: handles both numeric and Spanish text dates
