@@ -274,23 +274,6 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 #         normalized = BANK_NAME_NORMALIZATION.get(bank_detected.lower().strip())
 #         if normalized:
 #             extracted_data['Destination_Bank'] = normalized
-    # extracted_data['Destination_Bank'] = None
-    # cleaned_lower = cleaned_text.lower()
-
-    # # Find numeric destino code (3–7 digits, usually after "destino" or "cbu")
-    # destino_match = re.search(r'(?:destino|cbu|cvu)[:\s]*0*([0-9]{3,7})', cleaned_lower)
-    # if destino_match:
-    #     destino_code = destino_match.group(1)
-    #     destino_map = {
-    #         "007": "Galicia",
-    #         "285": "Macro",
-    #         "191": "Credicoop Nueva",
-    #         "0000053": "Agil Pagos",
-    #         "044": "Hipotecario",
-    #         "011": "Nacion",
-    #         "029":"Ciudad"
-    #     }
-    #     extracted_data['Destination_Bank'] = destino_map.get(destino_code, None)
 
     # ---------- DESTINO / CBU / CVU BANK DETECTION ----------
     extracted_data['Destination_Bank'] = None
@@ -361,6 +344,32 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower()=="cobro express":
             extracted_data['Destination_Bank'] = "Agil Pagos"
             logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
+
+    if not extracted_data['Destination_Bank']:
+        if "para" in cleaned_lower:
+            after_para = cleaned_lower.split("para", 1)[1]
+
+            # 1️⃣ Try to find a 22-digit CBU/CVU in the "after para" text
+            m = re.search(r'(?:CVU|CBU)[:\s]*([0-9]{22})', after_para, re.IGNORECASE)
+            if m:
+                cbu = m.group(1)
+                bank_code = cbu[:3]
+                code = norm_code(bank_code)
+                extracted_data['Destination_Bank'] = destino_map.get(code)
+
+                # 2️⃣ Also check if a bank name appears in the same text
+                bank_name_patterns = None
+                for b in bank_name_patterns:
+                    if b.lower() in after_para:
+                        extracted_data['Destination_Bank'] = b
+                        break
+
+        # 2️⃣ Otherwise, search in full text
+    if not extracted_data['Destination_Bank']:
+        for b in bank_name_patterns:
+            if b.lower() in cleaned_lower:
+                extracted_data['Destination_Bank'] = b
+                break
 
     logger.info(f"Final Destination_Bank: {extracted_data.get('Destination_Bank')}")
 
