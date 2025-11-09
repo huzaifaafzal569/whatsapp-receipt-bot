@@ -12,6 +12,8 @@ from typing import Dict, Any, Optional, List
 import time
 import base64
 import tempfile
+import pytz
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(
@@ -285,7 +287,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             "191": "Credicoop Nueva",
             "0000053": "Agil Pagos",
             "044": "Hipotecario",
-            "011": "Nacion"
+            "011": "Nacion",
+            "029":"Ciudad"
         }
         extracted_data['Destination_Bank'] = destino_map.get(destino_code, None)
 
@@ -357,7 +360,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             logger.warning(f"Date parsing failed: {e}")
             extracted_data['Receipt_Date'] = date_str
     else:
-        extracted_data['Receipt_Date'] = None
+        argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
+        current_date = datetime.now(argentina_tz).strftime("%Y-%m-%d")
+        extracted_data['Receipt_Date'] = current_date
+        logger.info(f"No date found — using current Argentina date: {current_date}")
     
     
 
