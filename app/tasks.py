@@ -308,13 +308,16 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         "072": "Santander",
     }
 
-    # helper to normalize codes (keep 3-digit format, preserve leading zeros)
     def norm_code(code: str) -> str:
-        code = re.sub(r'\D', '', code or "")
-        # Special case for Agil Pagos CVU
+        code = re.sub(r'\D', '', code or "")  # remove non-digits
+        # Agil Pagos special case (e.g., 0000053...)
         if code.startswith("00000") and len(code) >= 7:
-            return code[5:8]
-        return code.zfill(3)[:3] 
+            return code[5:8]  # take digits 6,7,8
+        # General case: take first 3 digits
+        if len(code) >= 3:
+            return code[:3]
+        # If code is shorter than 3 digits, pad with zeros
+        return code.zfill(3) 
 
     # 1) Try explicit "destino" followed by short code (1–7 digits)
     m = re.search(r'destino[:\s]*([0-9]{1,7})', cleaned_lower)
@@ -326,7 +329,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 2) If not found, look for a 22-digit CBU/CVU and extract its first 3 digits (common case)
     if not extracted_data['Destination_Bank']:
-        m = re.search(r'(?:cbu|cvu)[:\s]*([0-9]{22})', cleaned_lower)
+        m = re.search(r'(?:CBU|CVU)[:\s]*([0-9]{22})', cleaned_lower)
         if m:
             cbu = m.group(1)
             bank_code = cbu[:3]  # first 3 digits of CBU are the bank code
@@ -336,7 +339,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 3) If still not found, try cbu/cvu with any digits and take first 3 digits
     if not extracted_data['Destination_Bank']:
-        m = re.search(r'(?:cbu|cvu)[:\s]*([0-9]{3,7})', cleaned_lower)
+        m = re.search(r'(?:CBU|CVU)[:\s]*([0-9]{3,7})', cleaned_lower)
         if m:
             code_raw = m.group(1)
             code = norm_code(code_raw)
@@ -355,7 +358,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 5) Special rule you wanted: if supplier == "Cobro Express" and no 'para' use Agil Pagos
     if not extracted_data['Destination_Bank']:
-        if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower().startswith("cobro express"):
+        if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower()=="cobro express":
             extracted_data['Destination_Bank'] = "Agil Pagos"
             logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
 
