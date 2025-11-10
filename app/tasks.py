@@ -409,26 +409,26 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
 
 
-    # --- Sender CUIT ---
-    if 'De' in cleaned_text:
-        sender_area = cleaned_text.split('De', 1)[-1]
-        if 'Para' in sender_area:
-            sender_area = sender_area.split('Para', 1)[0]
-    else:
-        sender_area = cleaned_text
+    # # --- Sender CUIT ---
+    # if 'De' in cleaned_text:
+    #     sender_area = cleaned_text.split('De', 1)[-1]
+    #     if 'Para' in sender_area:
+    #         sender_area = sender_area.split('Para', 1)[0]
+    # else:
+    #     sender_area = cleaned_text
 
-    sender_area = re.sub(r'\s+', ' ', sender_area)
-    if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-        extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
-    else:
-        extracted_data['Sender_CUIT'] = None
-
-    # # --- Sender CUIT Extraction ---9
-    # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+    # sender_area = re.sub(r'\s+', ' ', sender_area)
     # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
     #     extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
     # else:
     #     extracted_data['Sender_CUIT'] = None
+
+    # --- Sender CUIT Extraction ---9
+    sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+    if sender_match := re.search(patterns['cuit'], sender_area, re.I):
+        extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
+    else:
+        extracted_data['Sender_CUIT'] = None
 
     # receiver_area = re.sub(r'\s+', ' ', cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text)
     # if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
@@ -438,6 +438,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     #         extracted_data['Sender_CUIT'] = cuit_digits
     #     else:
     #         extracted_data['Sender_CUIT'] = None
+
+
+
+    
     # else:
     #     extracted_data['Sender_CUIT'] = None
     #     r_id = re.sub(r'\D', '', receiver_match.group(1))
