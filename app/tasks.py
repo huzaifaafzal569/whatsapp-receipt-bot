@@ -379,7 +379,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     #
     
     # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
-    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{9,15})',
+    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{11,15})',
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
     }
@@ -463,29 +463,22 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     receiver_area = re.sub(r'\s+', ' ', cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text)
     if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
-        r_id = re.sub(r'\D', '', receiver_match.group(1))
-        if r_id and r_id != extracted_data.get('Sender_CUIT'):
-            extracted_data['Receiver_CUIT'] = r_id
+        cuit_digits = re.sub(r'\D', '', sender_match.group(1))
+        # validate length = 11
+        if len(cuit_digits) == 11:
+            extracted_data['Sender_CUIT'] = cuit_digits
         else:
-            extracted_data['Receiver_CUIT'] = None
+            extracted_data['Sender_CUIT'] = None
     else:
-        extracted_data['Receiver_CUIT'] = None
-    # sender_area = cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text
-    # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-    #     extracted_data['Sender_CUIT'] = sender_match.group(1).replace('-', '')
-    # else:
-    #     extracted_data['Sender_CUIT'] = None
-
-    # # --- Receiver CUIT Extraction ---
-    # receiver_area = cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text
-    # if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
-    #     r_id = receiver_match.group(1).replace('-', '')
+        extracted_data['Sender_CUIT'] = None
+    #     r_id = re.sub(r'\D', '', receiver_match.group(1))
     #     if r_id and r_id != extracted_data.get('Sender_CUIT'):
     #         extracted_data['Receiver_CUIT'] = r_id
     #     else:
     #         extracted_data['Receiver_CUIT'] = None
     # else:
     #     extracted_data['Receiver_CUIT'] = None
+    
 
     # --- Transaction / Operation Number ---
     if op_match := re.search(patterns['operation'], cleaned_text, re.I):
