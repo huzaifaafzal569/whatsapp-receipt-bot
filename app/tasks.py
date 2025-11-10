@@ -291,14 +291,13 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             code = norm_code(code_raw)
             extracted_data['Destination_Bank'] = destino_map.get(code)
             logger.info(f"short cbu/cvu match -> raw:{code_raw} normalized:{code} bank:{extracted_data['Destination_Bank']}")
-
+    bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro",
+                                "BBVA", "ICBC", "Ciudad", "Credicoop", "Agil Pagos", "Nacion"]
     # 4) Fallback: text-based bank detection (your existing list)
     if not extracted_data['Destination_Bank']:
                 # SAFE:
         before, sep, after_para = cleaned_lower.partition("para")
         if sep:  # only proceed if 'para' exists
-            bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro",
-                                "BBVA", "ICBC", "Ciudad", "Credicoop", "Agil Pagos", "Nacion"]
             for b in bank_name_patterns:
                 if b.lower() in after_para:
                     extracted_data['Destination_Bank'] = b
