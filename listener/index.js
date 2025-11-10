@@ -7,7 +7,7 @@ import qrcode from 'qrcode'
 import fs from 'fs'
 import pino from 'pino';
 
-
+const processedMessages = new Set();
 const API_URL = process.env.API_URL || 'http://localhost:8000/webhook'
 //"http://fastapi_app:8000/webhook"
 //os.getev(API_URL)
@@ -73,6 +73,15 @@ async function startBot() {
         try {
             const message = msg.messages[0]
             if (!message?.message) return
+            const messageId = message.key.id
+            // ✅ Skip if this message was already processed
+            if (processedMessages.has(messageId)) {
+                console.log(`⚠️ Duplicate message ignored: ${messageId}`);
+                return;
+            }
+
+            // ✅ Mark this message as processed
+            processedMessages.add(messageId);
             if (message.key.fromMe) {
                 console.log('⏩ Skipping image I sent myself')
                 return
