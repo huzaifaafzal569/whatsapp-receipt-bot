@@ -236,46 +236,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'image_URL': metadata.get('image_url')
     
     }
-#     bank_name_patterns = ["Hipotecario", "Santander","Santandel", "Galicia", "Provincia", "Macro", "BBVA", "ICBC", "Ciudad","Credicoop","Credicoopnova","Agilpagos","Ágil Pagos","Agil","Nacion",]
-# #     bank_number_patterns = [
-# #     r'CBU[:\s]*([0-9]{22})',
-# #     r'CVU[:\s]*([0-9]{22})', 
-# #     r'Destino[:\s]*([0-9]{22})'
-# # ]    
-#     BANK_NAME_NORMALIZATION = {
-#     "agil": "Agil Pagos",
-#     "agilpagos": "Agil Pagos",
-#     "ágil pagos": "Agil Pagos",
-#     "santandel": "Santander",
-#     "credicoopnova": "Credicoop",
-# }
-
-#     extracted_data['Destination_Bank'] = None
-#     cleaned_lower = cleaned_text.lower()
-
-#     # 1️⃣ If there's a "para" section, only search within it
-#     if "para" in cleaned_lower:
-#         after_para = cleaned_lower.split("para", 1)[1]
-#         for b in bank_name_patterns:
-#             if b.lower() in after_para:
-#                 extracted_data['Destination_Bank'] = b
-#                 break
-
-#     # 2️⃣ Otherwise, search in full text
-#     if not extracted_data['Destination_Bank']:
-#         for b in bank_name_patterns:
-#             if b.lower() in cleaned_lower:
-#                 extracted_data['Destination_Bank'] = b
-#                 break
-
-#     if "para" not in cleaned_lower and extracted_data.get('Supplier', '').lower() == "cobro express":
-#         extracted_data['Destination_Bank'] = "Agil Pagos"
-
-#     bank_detected = extracted_data.get('Destination_Bank')
-#     if bank_detected:
-#         normalized = BANK_NAME_NORMALIZATION.get(bank_detected.lower().strip())
-#         if normalized:
-#             extracted_data['Destination_Bank'] = normalized
+#    
 
     # ---------- DESTINO / CBU / CVU BANK DETECTION ----------
     extracted_data['Destination_Bank'] = None
@@ -388,19 +349,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
     }
-#     patterns = {
-#     'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
-#     'amount': r'(?:[MB]onto|PESOS|IMPORTE|MONEDA|TOTAL|PAGO|Banto1?)\s*[:$]?\s*([\d.,]+)',
-#     'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m|identificaci[oó]n)[:.\s]*([0-9]{7,11})',
-#     'operation': r'(?:[Nn]\s*de\s*[oc]peraci[oó]n|operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*[:\-]?\s*([A-Z0-9]{6,})',
-# }
-
-    # if date_match := re.search(patterns['date'], cleaned_text, re.I):
-    #     date_str = date_match.group(1)
-    #     date_str = (date_str.replace(',', '')
-    #                         .replace(' de ', '/')
-    #                         .replace(' ', '/'))
-    #     extracted_data['Receipt_Date'] = date_str.strip()
+#    
 
     if date_match := re.search(patterns['date'], cleaned_text, re.I):
         date_str = date_match.group(1).strip().lower()
