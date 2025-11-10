@@ -85,7 +85,7 @@ def detect_supplier(text: str) -> str:
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
-    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma", "Aurinegros", "Cobro Sur Sa"],
+    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma de pago", "Aurinegros", "Cobro Sur Sa"],
     "Cobro_Express": ["Cobro Express"],
     "Clan": ["CLAN SRL"],
     "Open": ["RAZ Y CIA"],
@@ -94,12 +94,14 @@ FOLDER_GROUPS = {
 
 def get_folder_for_supplier(supplier_name: str) -> str:
     """Return the folder name for a given supplier."""
+    if not supplier_name:
+        return "Others"
     supplier_lower = supplier_name.lower()
     for folder, suppliers in FOLDER_GROUPS.items():
         for s in suppliers:
             if s.lower() in supplier_lower:
                 return folder
-    return "Folder_5"
+    return "Others"
 
 
 def extract_text_from_result(page_results: List[Any]) -> List[str]:
@@ -331,14 +333,16 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # 4) Fallback: text-based bank detection (your existing list)
     if not extracted_data['Destination_Bank']:
-        after_para = cleaned_lower.split("para", 1)[1]
-        bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro",
-                            "BBVA", "ICBC", "Ciudad", "Credicoop", "Agil Pagos", "Nacion"]
-        for b in bank_name_patterns:
-            if b.lower() in after_para:
-                extracted_data['Destination_Bank'] = b
-                logger.info(f"text match -> bank:{b}")
-                break
+                # SAFE:
+        before, sep, after_para = cleaned_lower.partition("para")
+        if sep:  # only proceed if 'para' exists
+            bank_name_patterns = ["Hipotecario", "Santander", "Galicia", "Provincia", "Macro",
+                                "BBVA", "ICBC", "Ciudad", "Credicoop", "Agil Pagos", "Nacion"]
+            for b in bank_name_patterns:
+                if b.lower() in after_para:
+                    extracted_data['Destination_Bank'] = b
+                    logger.info(f"text match -> bank:{b}")
+                    break
 
     # 5) Special rule you wanted: if supplier == "Cobro Express" and no 'para' use Agil Pagos
     if not extracted_data['Destination_Bank']:
@@ -347,8 +351,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
 
     if not extracted_data['Destination_Bank']:
-        if "para" in cleaned_lower:
-            after_para = cleaned_lower.split("para", 1)[1]
+        before, sep, after_para = cleaned_lower.partition("para")
+        if sep:
 
             # 1️⃣ Try to find a 22-digit CBU/CVU in the "after para" text
             m = re.search(r'(?:CVU|CBU)[:\s]*([0-9]{22})', after_para, re.IGNORECASE)
@@ -455,23 +459,39 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         else:
             extracted_data['Amount'] = None
 
-    # --- Sender CUIT Extraction ---9
-    sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+
+
+    # --- Sender CUIT ---
+    if 'De' in cleaned_text:
+        sender_area = cleaned_text.split('De', 1)[-1]
+        if 'Para' in sender_area:
+            sender_area = sender_area.split('Para', 1)[0]
+    else:
+        sender_area = cleaned_text
+
+    sender_area = re.sub(r'\s+', ' ', sender_area)
     if sender_match := re.search(patterns['cuit'], sender_area, re.I):
         extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
     else:
         extracted_data['Sender_CUIT'] = None
 
-    receiver_area = re.sub(r'\s+', ' ', cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text)
-    if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
-        cuit_digits = re.sub(r'\D', '', sender_match.group(1))
-        # validate length = 11
-        if len(cuit_digits) == 11:
-            extracted_data['Sender_CUIT'] = cuit_digits
-        else:
-            extracted_data['Sender_CUIT'] = None
-    else:
-        extracted_data['Sender_CUIT'] = None
+    # # --- Sender CUIT Extraction ---9
+    # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+    # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
+    #     extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
+    # else:
+    #     extracted_data['Sender_CUIT'] = None
+
+    # receiver_area = re.sub(r'\s+', ' ', cleaned_text.split('Para', 1)[-1] if 'Para' in cleaned_text else cleaned_text)
+    # if receiver_match := re.search(patterns['cuit'], receiver_area, re.I):
+    #     cuit_digits = re.sub(r'\D', '', sender_match.group(1))
+    #     # validate length = 11
+    #     if len(cuit_digits) == 11:
+    #         extracted_data['Sender_CUIT'] = cuit_digits
+    #     else:
+    #         extracted_data['Sender_CUIT'] = None
+    # else:
+    #     extracted_data['Sender_CUIT'] = None
     #     r_id = re.sub(r'\D', '', receiver_match.group(1))
     #     if r_id and r_id != extracted_data.get('Sender_CUIT'):
     #         extracted_data['Receiver_CUIT'] = r_id
