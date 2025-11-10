@@ -101,7 +101,7 @@ async function startBot() {
                     console.log(`📢 Image received in group: ${groupName} from ${senderJid}`)
                 } catch (groupError) {
                     console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
-                    groupName = 'Group Name Error'
+                    groupName = 'Ini Transgestiona Ciudad'
                 }
 
                 // 2. Image Processing Block

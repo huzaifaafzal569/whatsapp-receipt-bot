@@ -221,8 +221,7 @@ def write_row(spreadsheet_id: str, row_values: List[str], sheet_base_name: str =
 
     # Headers
     headers = [
-        "Receipt_Date", "Amount", "Sender_CUIT",
-        "Receiver_CUIT", "Transaction_Number",'Supplier', "Destination_Bank",
+        "Receipt_Date", "Amount", "Sender_CUIT", "Transaction_Number",'Supplier', "Destination_Bank",
         "WhatsApp_Group", "Receipt_Sent_Time", "Image_Link"
     ]
 
