@@ -345,7 +345,9 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
     
     # Amount: prevents picking large numbers (filters via \$ or before “Motivo”)
-    'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*([\d.,]+)',
+    # 'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*([\d.,]+)',
+    'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*(\d+(?:[.,]\d+)+)',
+
     
     # CUIT: same as before
     #
@@ -442,7 +444,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     if sender_match := re.search(patterns['cuit'], sender_area, re.I):
         cuit_digits = re.sub(r'\D', '', sender_match.group(1))
         # validate length = 11
-        if len(cuit_digits) == 11:
+        if len(cuit_digits) == 11 and cuit_digits.startswith('2'):
             extracted_data['Sender_CUIT'] = cuit_digits
         else:
             extracted_data['Sender_CUIT'] = None
