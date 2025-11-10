@@ -376,9 +376,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*([\d.,]+)',
     
     # CUIT: same as before
-    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)[:\s]*([0-9]{2}[-]?[0-9]{8}[-]?[0-9]{1})',
-    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
+    #
     
+    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
+    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{9,15})',
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
     }
