@@ -355,8 +355,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
     'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{11,15})',
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
-    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9]{6,})',
-    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
+    
+    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
+
+    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
     }
 #    
 
