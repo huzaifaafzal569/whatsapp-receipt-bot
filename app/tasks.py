@@ -73,7 +73,8 @@ SUPPLIERS = [
     "Cobro Express",
     "Cobro Sur Sa",
     "CLAN SRL",
-    "RAZ Y CIA"
+    "RAZ Y CIA",
+    "Cobro sur"
 ]
 DEFAULT_SUPPLIER = "Other"
 
@@ -85,7 +86,7 @@ def detect_supplier(text: str) -> str:
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
-    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma de pago", "Aurinegros", "Cobro Sur Sa"],
+    "Prestigio": ["Transgestiona", "Prestigio pagos", "Plataforma de pago", "Aurinegros", "Cobro Sur Sa", "Cobro sur"],
     "Cobro_Express": ["Cobro Express"],
     "Clan": ["CLAN SRL"],
     "Open": ["RAZ Y CIA"],
@@ -322,6 +323,13 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
                 code = norm_code(bank_code)
                 extracted_data['Destination_Bank'] = destino_map.get(code)
                 logger.info(f"'para' section 22-digit CBU found -> bank_code:{bank_code} normalized:{code} bank:{extracted_data['Destination_Bank']}")
+    
+    if not extracted_data['Destination_Bank']:
+        if extracted_data.get('Supplier', '').lower()=="transgestiona" or extracted_data.get('Supplier', '').lower()=="transgestiona S A":
+            extracted_data['Destination_Bank'] = "Ciudad"
+            logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
+
+    
 
         # 2️⃣ Otherwise, search in full text
     if not extracted_data['Destination_Bank']:
@@ -424,9 +432,20 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     #     extracted_data['Sender_CUIT'] = None
 
     # --- Sender CUIT Extraction ---9
-    sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+    sender_area = cleaned_text
+    if 'De' in cleaned_text:
+        sender_area = cleaned_text.split('De', 1)[-1]
+        if 'Para' in sender_area:
+            sender_area = sender_area.split('Para', 1)[0]
+    # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
+    sender_area = re.sub(r'\s+', ' ', sender_area)
     if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-        extracted_data['Sender_CUIT'] = re.sub(r'\D', '', sender_match.group(1))
+        cuit_digits = re.sub(r'\D', '', sender_match.group(1))
+        # validate length = 11
+        if len(cuit_digits) == 11:
+            extracted_data['Sender_CUIT'] = cuit_digits
+        else:
+            extracted_data['Sender_CUIT'] = None
     else:
         extracted_data['Sender_CUIT'] = None
 
@@ -441,7 +460,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
 
 
-    
+
     # else:
     #     extracted_data['Sender_CUIT'] = None
     #     r_id = re.sub(r'\D', '', receiver_match.group(1))
