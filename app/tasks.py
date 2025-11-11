@@ -367,11 +367,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
-    # 'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago)\s*[:\-]?\s*([0-9]+)',
-    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|referen[cñ]ia|control|transacci[oó]n|identificaci[oó]n|operation)\s*[:\-]?\s*([0-9]+?)',
+    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago)\s*[:\-]?\s*([0-9]+)',
+    # 'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|referen[cñ]ia|control|transacci[oó]n|identificaci[oó]n|operation)\s*[:\-]?\s*([0-9]+?)',
     # 'alphanumeric_op': r'(?:c[oó]digo\s+de\s+identificaci[oó]n|referencia|control|comprobante|transacci[oó]n|operation)\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
     'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*([A-Za-z0-9\s\n\-]+?)' # Note the non-greedy '?'
                       r'(?=\s*(?:Fecha|Hora|CBU|CUIL|De|Para|Importe|\$|Tipo|Concepto|Referencia))',
+    'referencia_op': r'referen[cñ]ia\s*[:\-]?\s*[\s\n]{0,10}\s*([A-Za-z0-9\s\n\-]+?)',
 
 
 
@@ -503,6 +504,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         if op_value:
             extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
     elif op_match := re.search(patterns['alphanumeric_op'], cleaned_text, re.I | re.S):
+        op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
+        if op_value:
+            extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+
+    elif op_match := re.search(patterns['referencia_op'], cleaned_text, re.I | re.S):
+    # Tier 2: Referencia (Requires cleanup for spaces/hyphens since it can be mixed)
         op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
         if op_value:
             extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
