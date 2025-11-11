@@ -367,6 +367,9 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
+    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago)\s*[:\-]?\s*([0-9]+)',
+    'alphanumeric_op': r'(?:c[oó]digo\s+de\s+identificaci[oó]n|referencia|control|comprobante|transacci[oó]n|operation)\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
+
 
 
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
@@ -492,10 +495,14 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     
 
     # --- Transaction / Operation Number ---
-    if op_match := re.search(patterns['operation'], cleaned_text, re.I | re.S):
+    if op_match := re.search(patterns['numeric_op'], cleaned_text, re.I | re.S):
+        op_value = op_match.group(1).strip()
+        if op_value:
+            extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+    elif op_match := re.search(patterns['alphanumeric_op'], cleaned_text, re.I | re.S):
         op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
-        # extracted_data['Transaction_Number'] = op_match.group(1).strip().replace('-', '')
-        extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+        if op_value:
+            extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
     else:
         extracted_data['Transaction_Number'] = None
 
