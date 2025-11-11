@@ -352,11 +352,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # CUIT: same as before
     #
     
-    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([0-9]{2}\s*[-]?\s*[0-9]{8}\s*[-]?\s*[0-9]{1})',
-    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{11,15})',
+    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{11,15})',
+    'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s\n]*([\d\-\s]{11,15})',
+
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     
-    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
+    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
 
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
     }
@@ -443,7 +444,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             sender_area = sender_area.split('Para', 1)[0]
     # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
     sender_area = re.sub(r'\s+', ' ', sender_area)
-    if sender_match := re.search(patterns['cuit'], sender_area, re.I):
+    # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
+    if sender_match := re.search(patterns['cuit'], sender_area, re.I | re.S):
         cuit_digits = re.sub(r'\D', '', sender_match.group(1))
         # validate length = 11
         if len(cuit_digits) == 11 and cuit_digits.startswith('2'):
