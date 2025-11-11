@@ -447,7 +447,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
     sender_area = re.sub(r'\s+', ' ', sender_area)
     # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-    if sender_match := re.search(patterns['cuit'], sender_area, re.I | re.S| re.M):
+    if sender_match := re.search(patterns['cuit'], sender_area, re.I | re.S):
         cuit_digits = re.sub(r'\D', '', sender_match.group(1))
         # validate length = 11
         if len(cuit_digits) == 11:
@@ -484,7 +484,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     
 
     # --- Transaction / Operation Number ---
-    if op_match := re.search(patterns['operation'], cleaned_text, re.I | re.S | re.M):
+    if op_match := re.search(patterns['operation'], cleaned_text, re.I | re.S):
         extracted_data['Transaction_Number'] = op_match.group(1).strip().replace('-', '')
     else:
         extracted_data['Transaction_Number'] = None
