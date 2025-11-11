@@ -359,6 +359,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?([0-9]+)',
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?)(\d+)'
+    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\d\s\n]+)'
+
 
 
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
