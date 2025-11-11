@@ -357,7 +357,9 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     
-    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
+    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?([0-9]+)',
+    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?)(\d+)'
+
 
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
     }
@@ -445,11 +447,14 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # sender_area = re.sub(r'\s+', ' ', cleaned_text.split('De', 1)[-1].split('Para', 1)[0] if 'De' in cleaned_text else cleaned_text)
     sender_area = re.sub(r'\s+', ' ', sender_area)
     # if sender_match := re.search(patterns['cuit'], sender_area, re.I):
-    if sender_match := re.search(patterns['cuit'], sender_area, re.I | re.S):
+    if sender_match := re.search(patterns['cuit'], sender_area, re.I | re.S| re.M):
         cuit_digits = re.sub(r'\D', '', sender_match.group(1))
         # validate length = 11
-        if len(cuit_digits) == 11 and cuit_digits.startswith('2'):
-            extracted_data['Sender_CUIT'] = cuit_digits
+        if len(cuit_digits) == 11:
+            if 'De' in cleaned_text or cuit_digits.startswith('2'):
+                extracted_data['Sender_CUIT'] = cuit_digits
+            else:
+                extracted_data['Sender_CUIT'] = None   
         else:
             extracted_data['Sender_CUIT'] = None
     else:
@@ -479,7 +484,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     
 
     # --- Transaction / Operation Number ---
-    if op_match := re.search(patterns['operation'], cleaned_text, re.I):
+    if op_match := re.search(patterns['operation'], cleaned_text, re.I | re.S | re.M):
         extracted_data['Transaction_Number'] = op_match.group(1).strip().replace('-', '')
     else:
         extracted_data['Transaction_Number'] = None
