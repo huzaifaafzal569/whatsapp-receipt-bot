@@ -83,6 +83,8 @@ def detect_supplier(text: str) -> str:
     for supplier in SUPPLIERS:
         if supplier.lower() in text_lower:
             return supplier
+        elif supplier.lower() not in text_lower and "cuidad" in text_lower:
+            return "Transgestiona"
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
