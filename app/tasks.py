@@ -80,11 +80,14 @@ DEFAULT_SUPPLIER = "Other"
 
 def detect_supplier(text: str) -> str:
     text_lower = text.lower()
+    bank_ciudad_pattern = r'(?:banco\s+destino|para|banco)\s*[:\-]?\s*([a-z\s\n]+ciudad[a-z\s\n]*?)'
+    
+    # 1. Check for the hardcoded rule FIRST.
+    if re.search(bank_ciudad_pattern, text_lower, re.S):
+        return "Transgestiona"
     for supplier in SUPPLIERS:
         if supplier.lower() in text_lower:
             return supplier
-        elif supplier.lower() not in text_lower and "cuidad" in text_lower:
-            return "Transgestiona"
     return DEFAULT_SUPPLIER
 
 FOLDER_GROUPS = {
@@ -369,7 +372,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
-    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control)\s*[:\-]?\s*([0-9]+)',
+    'numeric_op': r'(?:n°?\s+de\s+operaci[oó]n|n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control)\s*[:\-]?\s*([0-9]+)',
     # 'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|referen[cñ]ia|control|transacci[oó]n|identificaci[oó]n|operation)\s*[:\-]?\s*([0-9]+?)',
     # 'alphanumeric_op': r'(?:c[oó]digo\s+de\s+identificaci[oó]n|referencia|control|comprobante|transacci[oó]n|operation)\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
     'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*([A-Za-z0-9\s\n\-]+?)' # Note the non-greedy '?'
