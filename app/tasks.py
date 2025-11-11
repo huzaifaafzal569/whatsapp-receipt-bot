@@ -332,7 +332,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     if not extracted_data['Destination_Bank']:
         if extracted_data.get('Supplier', '').lower()=="transgestiona" or extracted_data.get('Supplier', '').lower()=="transgestiona S A":
             extracted_data['Destination_Bank'] = "Ciudad"
-            logger.info("No 'para' and supplier Cobro Express -> set Agil Pagos")
+            logger.info("No 'para' and supplier transgestiona -> set Ciudad")
+
+    if not extracted_data['Destination_Bank']:
+        if extracted_data.get('Supplier', '').lower()=="cobro sur sa" or extracted_data.get('Supplier', '').lower()=="cobro sur sa":
+            extracted_data['Destination_Bank'] = "Hipotecario"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Hipotecario")
 
     
 
@@ -375,9 +380,9 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     'numeric_op': r'(?:n°?\s+de\s+operaci[oó]n|n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control|referencia|transacti[oó]n|n°?\s*c[oó]mprobante)\s*[:\-]?\s*([0-9]+)',
     
 
-    'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*' \
+    'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|id Op.|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*' \
                    r'(?=[A-Za-z0-9\s\n\-]*[A-Za-z])(?=[A-Za-z0-9\s\n\-]*[0-9])' \
-                   r'([A-Za-z0-9\s\n\-]+?)',
+                   r'([A-Za-z0-9\s\n\-]+)',
     'referencia_op': r'referen[cñ]ia\s*[:\-]?\s*[\s\n]{0,10}\s*([A-Za-z0-9\s\n\-]+?)',
 
 
