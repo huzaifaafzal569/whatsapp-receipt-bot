@@ -369,7 +369,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
-    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago)\s*[:\-]?\s*([0-9]+)',
+    'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control)\s*[:\-]?\s*([0-9]+)',
     # 'numeric_op': r'(?:n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|referen[cñ]ia|control|transacci[oó]n|identificaci[oó]n|operation)\s*[:\-]?\s*([0-9]+?)',
     # 'alphanumeric_op': r'(?:c[oó]digo\s+de\s+identificaci[oó]n|referencia|control|comprobante|transacci[oó]n|operation)\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
     'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*([A-Za-z0-9\s\n\-]+?)' # Note the non-greedy '?'
