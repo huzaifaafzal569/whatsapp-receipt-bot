@@ -352,15 +352,20 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # CUIT: same as before
     #
     
-    # 'cuit': r'(?:CUIT|CUIL|DNI|N[úu]m\s*Doc)?[:\s]*([\d\-\s]{11,15})',
-    # 'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)?[:\s\n]*([\d\-\s]{11,15})',
-    'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)?[:\s\n]*([\d\-]{11,15})',
+    # 'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)?[:\s\n]*([\d\-]{11,15})',
+    'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)[:\s\n]*([0-9\-]{11,15})',
 
     # Operation/Transaction number: looks for Mercado Pago references and large IDs
     
-    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?([0-9]+)',
+    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?([0-9]+)',
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?)(\d+)'
-    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\d\s\n]+)'
+    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\d\s\n]+)'
+    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)'
+    # r'(?:\s*(?:or|o)?\s*CTRL)?'
+    # r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9\s\n]+)',
+    'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n|operation)'
+    r'(?:\s*(?:or|o)?\s*CTRL)?'
+    r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
 
 
@@ -488,7 +493,9 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     # --- Transaction / Operation Number ---
     if op_match := re.search(patterns['operation'], cleaned_text, re.I | re.S):
-        extracted_data['Transaction_Number'] = op_match.group(1).strip().replace('-', '')
+        op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
+        # extracted_data['Transaction_Number'] = op_match.group(1).strip().replace('-', '')
+        extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
     else:
         extracted_data['Transaction_Number'] = None
 
