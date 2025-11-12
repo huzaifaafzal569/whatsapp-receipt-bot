@@ -386,7 +386,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             logger.info("No 'para' and supplier transgestiona -> set Ciudad")
 
     if not extracted_data['Destination_Bank']:
-        if extracted_data.get('Supplier', '').lower()=="cobro sur sa" or extracted_data.get('Supplier', '').lower()=="cobro sur sa":
+        if extracted_data.get('Supplier', '').lower()=="cobro sur sa" or extracted_data.get('Supplier', '').lower()=="cobro sur":
             extracted_data['Destination_Bank'] = "Hipotecario"
             logger.info("No 'para' and supplier Cobro Sur Sa -> set Hipotecario")
 
