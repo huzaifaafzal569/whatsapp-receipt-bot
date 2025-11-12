@@ -377,10 +377,10 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
 
-    'numeric_op': r'(?:n°?\s+de\s+operaci[oó]n|n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control|referencia|transacti[oó]n|n°?\s*c[oó]mprobante|Nro. de comprobante|comprobante)\s*[:\-]?\s*([0-9]+)',
+    'numeric_op': r'(?:n°?\s+de\s+operaci[oó]n|n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control|referencia|transacti[oó]n|n°?\s*c[oó]mprobante|Nro. de comprobante|comprobante|transacci[oó]n)\s*[:\-]?\s*([0-9]+)',
     
 
-    'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|id Op.|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*' \
+    'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|id Op.|transacci[oó]n|operation|C[oó]mprobante|transacci[oó])\s*[:\-]?\s*' \
                    r'(?=[A-Za-z0-9\s\n\-]*[A-Za-z])(?=[A-Za-z0-9\s\n\-]*[0-9])' \
                    r'([A-Za-z0-9\s\n\-]{5,36})',
     'referencia_op': r'referen[cñ]ia\s*[:\-]?\s*[\s\n]{0,10}\s*([A-Za-z0-9\s\n\-]+?)',
@@ -582,7 +582,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         cuit_digits = re.sub(r'\D', '', sender_match.group(1))
         # validate length = 11
         if len(cuit_digits) == 11:
-            if 'De' in cleaned_text or cuit_digits.startswith('2'):
+            if ('De' in cleaned_text and not "BNA" in cleaned_text) or cuit_digits.startswith('2'):
                 extracted_data['Sender_CUIT'] = cuit_digits
             else:
                 extracted_data['Sender_CUIT'] = None   
