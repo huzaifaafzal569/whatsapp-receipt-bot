@@ -101,19 +101,29 @@ async function startBot() {
             const sentAt = new Date(Number(messageTimestamp) * 1000).toISOString()
 
             let groupName = null
-
-            // --- CRITICAL FIX: ONLY PROCESS IF FROM A GROUP AND IS AN IMAGE ---
-            if (from.endsWith('@g.us') && hasImage) {
-
-                // 1. Get Group Name
+            // --- CRITICAL FIX: RETRIEVE GROUP NAME ONCE FOR ALL GROUP MESSAGES ---
+            if (from.endsWith('@g.us')) {
                 try {
                     const groupMetadata = await sock.groupMetadata(from)
                     groupName = groupMetadata.subject
-                    console.log(`📢 Image received in group: ${groupName} from ${senderJid}`)
+                    console.log(`📢 Message received in group: ${groupName} from ${senderJid}`)
                 } catch (groupError) {
                     console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
                     groupName = 'Ini Transgestiona Ciudad'
                 }
+            }
+            // --- CRITICAL FIX: ONLY PROCESS IF FROM A GROUP AND IS AN IMAGE ---
+            if (from.endsWith('@g.us') && hasImage) {
+
+                // 1. Get Group Name
+                // try {
+                //     const groupMetadata = await sock.groupMetadata(from)
+                //     groupName = groupMetadata.subject
+                //     console.log(`📢 Image received in group: ${groupName} from ${senderJid}`)
+                // } catch (groupError) {
+                //     console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
+                //     groupName = 'Ini Transgestiona Ciudad'
+                // }
 
                 // 2. Image Processing Block
                 try {
@@ -181,6 +191,7 @@ async function startBot() {
             }
             //new addition for pdf
             if (from.endsWith('@g.us') && isPdf) {
+
                 console.log(`📄 PDF document received in group: ${groupName}. Skipping OCR.`)
 
                 // Send a minimal payload to the backend to signal insertion of an empty row
