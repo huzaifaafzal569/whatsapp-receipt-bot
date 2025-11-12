@@ -382,7 +382,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     'alphanumeric_op': r'(?:C[oó]digo\s+de\s+transacci[oó]n|C[oó]digo\s+de\s+identificaci[oó]n|referencia|control|id Op.|transacci[oó]n|operation|C[oó]mprobante)\s*[:\-]?\s*' \
                    r'(?=[A-Za-z0-9\s\n\-]*[A-Za-z])(?=[A-Za-z0-9\s\n\-]*[0-9])' \
-                   r'([A-Za-z0-9\s\n\-]{20,36})',
+                   r'([A-Za-z0-9\s\n\-]{5,36})',
     'referencia_op': r'referen[cñ]ia\s*[:\-]?\s*[\s\n]{0,10}\s*([A-Za-z0-9\s\n\-]+?)',
 
 
@@ -436,15 +436,44 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         extracted_data['Receipt_Date'] = current_date
         logger.info(f"No date found — using current Argentina date: {current_date}")
     
-    
+    def format_to_argentine_locale(raw_value: str) -> str:
+        """Converts '786435,27' to '786.435,27'"""
+        raw_value = raw_value.replace(' ', '').replace('.', '') # Clean up existing periods/spaces if any
+        
+        # Split into integer and decimal part (comma is the decimal separator)
+        if ',' in raw_value:
+            integer_part, decimal_part = raw_value.split(',', 1)
+        else:
+            integer_part = raw_value
+            decimal_part = None
+        
+        # Insert periods as thousands separators from the right of the integer part
+        formatted_integer = ""
+        for i, digit in enumerate(reversed(integer_part)):
+            if i > 0 and i % 3 == 0:
+                formatted_integer += "."
+            formatted_integer += digit
+        
+        # Reverse the integer part back and combine
+        formatted_integer = formatted_integer[::-1]
+        
+        if decimal_part is not None:
+            return f"{formatted_integer},{decimal_part}"
+        else:
+            return formatted_integer
+        
 
     if amount_match := re.search(patterns['amount'], cleaned_text, re.I):
-        extracted_data['Amount'] = amount_match.group(1).strip()
+        # extracted_data['Amount'] = amount_match.group(1).strip()
+        raw_amount = amount_match.group(1).strip()
+        extracted_data['Amount'] = format_to_argentine_locale(raw_amount)
     else:
     # Fallback: try to find a standalone numeric pattern like 400,000.00 or 1.234,56
         amount_match = re.search(r'(\d{1,3}(?:[.,]\d{3})+[.,]\d{2})', cleaned_text)
         if amount_match:
-            extracted_data['Amount'] = amount_match.group(1).strip()
+            raw_amount = amount_match.group(1).strip()
+            # APPLY FORMATTING HERE:
+            extracted_data['Amount'] = format_to_argentine_locale(raw_amount)
         else:
             extracted_data['Amount'] = None
 
@@ -518,6 +547,14 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
         if op_value:
             extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+    
+    elif "Nro Control:" in cleaned_text:
+        control_area = cleaned_text.split("Nro Control:", 1)[-1]
+        control_area = re.sub(r'\s+', ' ', control_area)
+        if op_match := re.search(patterns['numeric_op'], cleaned_text, re.I | re.S):
+            op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
+            if op_value:
+                extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
 
     elif op_match := re.search(patterns['referencia_op'], cleaned_text, re.I | re.S):
     # Tier 2: Referencia (Requires cleanup for spaces/hyphens since it can be mixed)
