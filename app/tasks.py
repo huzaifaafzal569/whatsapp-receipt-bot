@@ -436,31 +436,79 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         extracted_data['Receipt_Date'] = current_date
         logger.info(f"No date found — using current Argentina date: {current_date}")
     
+    # def format_to_argentine_locale(raw_value: str) -> str:
+    #     """Converts '786435,27' to '786.435,27'"""
+    #     raw_value = raw_value.replace(' ', '').replace('.', '') # Clean up existing periods/spaces if any
+        
+    #     # Split into integer and decimal part (comma is the decimal separator)
+    #     if ',' in raw_value:
+    #         integer_part, decimal_part = raw_value.split(',', 1)
+    #     else:
+    #         integer_part = raw_value
+    #         decimal_part = None
+        
+    #     # Insert periods as thousands separators from the right of the integer part
+    #     formatted_integer = ""
+    #     for i, digit in enumerate(reversed(integer_part)):
+    #         if i > 0 and i % 3 == 0:
+    #             formatted_integer += "."
+    #         formatted_integer += digit
+        
+    #     # Reverse the integer part back and combine
+    #     formatted_integer = formatted_integer[::-1]
+        
+    #     if decimal_part is not None:
+    #         return f"{formatted_integer},{decimal_part}"
+    #     else:
+    #         return formatted_integer
+
     def format_to_argentine_locale(raw_value: str) -> str:
-        """Converts '786435,27' to '786.435,27'"""
-        raw_value = raw_value.replace(' ', '').replace('.', '') # Clean up existing periods/spaces if any
+    
+        if not raw_value:
+            return "0,00" # Safe return
+
+        # 1. Clean up spacing and currency symbols (if any)
+        clean_value = raw_value.strip().replace(' ', '')
         
-        # Split into integer and decimal part (comma is the decimal separator)
-        if ',' in raw_value:
-            integer_part, decimal_part = raw_value.split(',', 1)
+        # 2. Convert to a US/Python standard float string (e.g., '784596.27')
+        
+        # Check for two separators (e.g., 1.234,56 or 1,234.56)
+        if '.' in clean_value and ',' in clean_value:
+            # Determine decimal separator by its position (rightmost is usually decimal)
+            if clean_value.rfind(',') > clean_value.rfind('.'):
+                # Format is 1.234,56 (AR format) -> remove dots, keep comma
+                float_str = clean_value.replace('.', '')
+            else:
+                # Format is 1,234.56 (US format) -> remove commas, keep dot
+                float_str = clean_value.replace(',', '')
         else:
-            integer_part = raw_value
-            decimal_part = None
-        
-        # Insert periods as thousands separators from the right of the integer part
+            # Only one separator (e.g., 784596.27 or 784596,27) or none.
+            float_str = clean_value
+
+        # 3. Convert to float to normalize, then format as clean AR string.
+        try:
+            # Convert to float to handle different raw formats
+            num_value = float(float_str.replace(',', '.')) 
+            
+            # Split number into integer and decimal components based on Python's string representation
+            # Example: 784596.27 -> '784596' and '27'
+            integer_part, decimal_part = "{:.2f}".format(num_value).split('.')
+            
+        except ValueError:
+            return raw_value # Return original value if conversion fails
+
+    # 4. Insert periods as thousands separators into the integer part
         formatted_integer = ""
         for i, digit in enumerate(reversed(integer_part)):
             if i > 0 and i % 3 == 0:
                 formatted_integer += "."
             formatted_integer += digit
         
-        # Reverse the integer part back and combine
+        # Reverse back
         formatted_integer = formatted_integer[::-1]
         
-        if decimal_part is not None:
-            return f"{formatted_integer},{decimal_part}"
-        else:
-            return formatted_integer
+        # 5. Combine with the Argentine decimal comma
+        return f"{formatted_integer},{decimal_part}"
         
 
     if amount_match := re.search(patterns['amount'], cleaned_text, re.I):
