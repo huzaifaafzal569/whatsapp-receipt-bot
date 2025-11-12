@@ -352,10 +352,12 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
 
     patterns = {
     # Date: handles both numeric and Spanish text dates
-    'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
-    
-    # Amount: prevents picking large numbers (filters via \$ or before “Motivo”)
-    # 'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*([\d.,]+)',
+    # 'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
+
+    'date': r'(\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b' # DD/MM/YYYY
+        r'|\b\d{1,2}[-/](?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*[-/]\d{2,4}\b' # <-- NEW HYBRID FORMAT
+        r'|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
+
     'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*(\d+(?:[.,]\d+)+)',
 
     
@@ -365,14 +367,6 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     # 'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)?[:\s\n]*([\d\-]{11,15})',
     'cuit': r'(?:CUIT|CUIL|DNI|origen|ORIGEN|N[úu]m\s*Doc)[:\s\n]*([0-9\-]{11,15})',
 
-    # Operation/Transaction number: looks for Mercado Pago references and large IDs
-    
-    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?([0-9]+)',
-    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\s\S]*?)(\d+)'
-    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([\d\s\n]+)'
-    # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n)'
-    # r'(?:\s*(?:or|o)?\s*CTRL)?'
-    # r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Z0-9\s\n]+)',
     'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|control|comprobante|transacci[oó]n|operation)'
     r'(?:\s*(?:or|o)?\s*CTRL)?'
     r'\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([A-Za-z0-9\s\n]+)',
