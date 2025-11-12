@@ -390,6 +390,11 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             extracted_data['Destination_Bank'] = "Hipotecario"
             logger.info("No 'para' and supplier Cobro Sur Sa -> set Hipotecario")
 
+    if not extracted_data['Destination_Bank']:
+        if extracted_data.get('Supplier', '').lower()=="prestigio pagos" or extracted_data.get('Supplier', '').lower()=="prestigio pagos sa":
+            extracted_data['Destination_Bank'] = "Agil Pagos"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Agil Pagos")
+
     
 
         # 2️⃣ Otherwise, search in full text
