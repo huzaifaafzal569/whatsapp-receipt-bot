@@ -385,6 +385,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
                    r'([A-Za-z0-9\s\n\-]{5,36})',
     'referencia_op': r'referen[cñ]ia\s*[:\-]?\s*[\s\n]{0,10}\s*([A-Za-z0-9\s\n\-]+?)',
 
+    'nro_control': r'nro\s*control\s*[:\-]?[\s\n\xa0\-:]+([0-9]+)'
+
 
 
     # 'operation': r'(?:operaci[oó]n|referencia|c[oó]digo|identificaci[oó]n|comprobante)\s*(?:de\s+)?(?:Mercado\s*Pago)?\s*[:\-]?\s*([0-9]+)'
@@ -613,9 +615,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
     
     elif "Nro Control:" in cleaned_text:
-        control_area = cleaned_text.split("Nro Control:", 1)[-1]
-        control_area = re.sub(r'\s+', ' ', control_area)
-        if op_match := re.search(patterns['numeric_op'], cleaned_text, re.I | re.S):
+        if op_match := re.search(patterns['nro_control'], cleaned_text, re.I | re.S):
             op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
             if op_value:
                 extracted_data['Transaction_Number'] = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
