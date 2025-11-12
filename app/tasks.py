@@ -463,41 +463,57 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     #         return formatted_integer
 
     def format_to_argentine_locale(raw_value: str) -> str:
-    
+        """
+        Converts a raw numeric string from various formats (US, AR, OCR errors)
+        into the standard Argentine format (e.g., '784.569,27').
+        """
         if not raw_value:
-            return "0,00" # Safe return
+            return "0,00"
 
-        # 1. Clean up spacing and currency symbols (if any)
-        clean_value = raw_value.strip().replace(' ', '')
+        # 1. Clean up spacing and symbols
+        clean_value = raw_value.strip().replace(' ', '').replace('$', '').replace('€', '')
         
-        # 2. Convert to a US/Python standard float string (e.g., '784596.27')
+        # --- 2. Determine the clean US float string (float_str) ---
         
-        # Check for two separators (e.g., 1.234,56 or 1,234.56)
+        # Case A: Mixed separators (e.g., 1.234,56 or 1,234.56)
         if '.' in clean_value and ',' in clean_value:
-            # Determine decimal separator by its position (rightmost is usually decimal)
+            # Rightmost separator is the decimal separator
             if clean_value.rfind(',') > clean_value.rfind('.'):
                 # Format is 1.234,56 (AR format) -> remove dots, keep comma
                 float_str = clean_value.replace('.', '')
             else:
                 # Format is 1,234.56 (US format) -> remove commas, keep dot
                 float_str = clean_value.replace(',', '')
-        else:
-            # Only one separator (e.g., 784596.27 or 784596,27) or none.
-            float_str = clean_value
-
-        # 3. Convert to float to normalize, then format as clean AR string.
-        try:
-            # Convert to float to handle different raw formats
-            num_value = float(float_str.replace(',', '.')) 
+        
+        # Case B: Multiple periods (OCR error: 203.456.21)
+        elif clean_value.count('.') > 1:
+            # Assume all but the LAST period are thousands separators (to be removed)
+            last_dot_index = clean_value.rfind('.')
+            integer_part_to_clean = clean_value[:last_dot_index]
+            decimal_part_with_dot = clean_value[last_dot_index:]
+            float_str = integer_part_to_clean.replace('.', '') + decimal_part_with_dot
             
-            # Split number into integer and decimal components based on Python's string representation
-            # Example: 784596.27 -> '784596' and '27'
+        # Case C (FIX): Single separator or none (e.g., 784569.27 or 784569,27)
+        else:
+            # CRITICAL FIX: If it contains a comma, assume it's the decimal and convert to dot for float()
+            if ',' in clean_value:
+                float_str = clean_value.replace(',', '.') # Converts '784569,27' to '784569.27'
+            else:
+                # Assume it's already US format (e.g., 784569.27) or an integer
+                float_str = clean_value 
+
+        # --- 3. Convert to float to normalize and extract parts ---
+        try:
+            # The float_str is now clean and uses only the dot as the decimal separator.
+            num_value = float(float_str) 
+            
+            # Get standardized integer and decimal parts (e.g., '784569' and '27')
             integer_part, decimal_part = "{:.2f}".format(num_value).split('.')
             
         except ValueError:
-            return raw_value # Return original value if conversion fails
+            return raw_value # Conversion failed
 
-    # 4. Insert periods as thousands separators into the integer part
+        # --- 4. Insert periods as thousands separators into the integer part ---
         formatted_integer = ""
         for i, digit in enumerate(reversed(integer_part)):
             if i > 0 and i % 3 == 0:
@@ -507,7 +523,7 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         # Reverse back
         formatted_integer = formatted_integer[::-1]
         
-        # 5. Combine with the Argentine decimal comma
+        # --- 5. Combine with the Argentine decimal comma ---
         return f"{formatted_integer},{decimal_part}"
         
 
