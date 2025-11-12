@@ -4,38 +4,47 @@ import re
 
 # We will use a dedicated pattern for this specific field
 control_pattern = r'nro\s*control\s*[:\-]?[\s\n\xa0\-:]+([0-9]+)' 
+patterns={'numeric_op': r'(?:n°?\s+de\s+operaci[oó]n|n[uú]mero\s+de\s+operaci[oó]n\s+de\s+Mercado\s*Pago|nro\.|n°?\s*control|referencia|transacti[oó]n|n°?\s*c[oó]mprobante|Nro. de comprobante|comprobante)\s*[:\-]?\s*([0-9]+)'
+}
 # Note: This is similar to the robust part of 'numeric_op', but only for 'nro control'
 
 # Example Text:
 text = """
 Reference                VAIOS
 
-Nro Control:             7852
+comprobante:         1234586
 Another line.
+
 """
 
-matches = "NO MATCH FOUND" # Default value
-
-# --- Dedicated Search Logic ---
-
-# 1. Check if the specific string is present (optional, but good for filtering large text)
-if "Nro Control" in text:
-    # 2. Search using the highly specific pattern (case-insensitive and dot-all flags)
-    # The pattern targets 'Nro Control' and captures the digits ([0-9]+) after the gap.
-    if op_match := re.search(control_pattern, text, re.I | re.S):
-        op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
-        
+if op_match := re.search(patterns['numeric_op'], text, re.I | re.S):
+        op_value = op_match.group(1).strip()
         if op_value:
-            # Apply your final formatting logic (last 6 digits or full value)
-            matches = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
-            print(f"Found Nro Control: {matches}")
-        else:
-            print("Nro Control found, but captured value was empty")
-    else:
-        # This executes if "Nro Control" is in text, but the number was not found right after it
-        print("Nro Control found, but numeric value could not be extracted by regex.")
-else:
-    print(matches) # Prints "NO MATCH FOUND"
+            Transaction_Number = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+            print(f"Found Transaction Number: {Transaction_Number}")
+
+# matches = "NO MATCH FOUND" # Default value
+
+# # --- Dedicated Search Logic ---
+
+# # 1. Check if the specific string is present (optional, but good for filtering large text)
+# if "Nro Control" in text:
+#     # 2. Search using the highly specific pattern (case-insensitive and dot-all flags)
+#     # The pattern targets 'Nro Control' and captures the digits ([0-9]+) after the gap.
+#     if op_match := re.search(control_pattern, text, re.I | re.S):
+#         op_value = op_match.group(1).strip().replace('-', '').replace(' ', '')
+        
+#         if op_value:
+#             # Apply your final formatting logic (last 6 digits or full value)
+#             matches = op_value[-6:].lower() if len(op_value) >= 6 else op_value.lower()
+#             print(f"Found Nro Control: {matches}")
+#         else:
+#             print("Nro Control found, but captured value was empty")
+#     else:
+#         # This executes if "Nro Control" is in text, but the number was not found right after it
+#         print("Nro Control found, but numeric value could not be extracted by regex.")
+# else:
+#     print(matches) # Prints "NO MATCH FOUND"
 
 # Amount="Noting"
 # def format_to_argentine_locale(raw_value: str) -> str:
