@@ -91,8 +91,8 @@ async function startBot() {
             const hasImage = !!message.message.imageMessage
             const imageMessage = message.message.imageMessage;
             const imageUrl = imageMessage.url; // Extract image URL if needed
-            const hasDocument = !!message.message.documentMessage
-            const isPdf = hasDocument && message.message.documentMessage.mimetype === 'application/pdf';
+            // const hasDocument = !!message.message.documentMessage
+            // const isPdf = hasDocument && message.message.documentMessage.mimetype === 'application/pdf';
             // In a group, the actual sender is in message.key.participant
             // If it's a direct chat (which we now ignore), participant will be null/undefined.
             const senderJid = message.key.participant || from;
@@ -102,28 +102,28 @@ async function startBot() {
 
             let groupName = null
             // --- CRITICAL FIX: RETRIEVE GROUP NAME ONCE FOR ALL GROUP MESSAGES ---
-            if (from.endsWith('@g.us')) {
-                try {
-                    const groupMetadata = await sock.groupMetadata(from)
-                    groupName = groupMetadata.subject
-                    console.log(`📢 Message received in group: ${groupName} from ${senderJid}`)
-                } catch (groupError) {
-                    console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
-                    groupName = 'Ini Transgestiona Ciudad'
-                }
-            }
+            // if (from.endsWith('@g.us')) {
+            //     try {
+            //         const groupMetadata = await sock.groupMetadata(from)
+            //         groupName = groupMetadata.subject
+            //         console.log(`📢 Message received in group: ${groupName} from ${senderJid}`)
+            //     } catch (groupError) {
+            //         console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
+            //         groupName = 'Ini Transgestiona Ciudad'
+            //     }
+            // }
             // --- CRITICAL FIX: ONLY PROCESS IF FROM A GROUP AND IS AN IMAGE ---
             if (from.endsWith('@g.us') && hasImage) {
 
                 // 1. Get Group Name
-                // try {
-                //     const groupMetadata = await sock.groupMetadata(from)
-                //     groupName = groupMetadata.subject
-                //     console.log(`📢 Image received in group: ${groupName} from ${senderJid}`)
-                // } catch (groupError) {
-                //     console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
-                //     groupName = 'Ini Transgestiona Ciudad'
-                // }
+                try {
+                    const groupMetadata = await sock.groupMetadata(from)
+                    groupName = groupMetadata.subject
+                    console.log(`📢 Image received in group: ${groupName} from ${senderJid}`)
+                } catch (groupError) {
+                    console.error(`❌ Failed to get group metadata for ${from}: ${groupError.message}`)
+                    groupName = 'Ini Transgestiona Ciudad'
+                }
 
                 // 2. Image Processing Block
                 try {
@@ -190,22 +190,22 @@ async function startBot() {
                 console.log(`⚠️ Ignoring image from direct chat: ${from}`)
             }
             //new addition for pdf
-            if (from.endsWith('@g.us') && isPdf) {
+            // if (from.endsWith('@g.us') && isPdf) {
 
-                console.log(`📄 PDF document received in group: ${groupName}. Skipping OCR.`)
+            //     console.log(`📄 PDF document received in group: ${groupName}. Skipping OCR.`)
 
-                // Send a minimal payload to the backend to signal insertion of an empty row
-                await axios.post(API_URL, {
-                    // Flag to tell the Python backend to insert an empty row
-                    skip_ocr: true,
-                    file_type: 'PDF',
-                    sender_jid: senderJid,
-                    message_id: message.key.id,
-                    group_name: groupName,
-                    sent_at: sentAt
-                });
-                console.log(`✅ Sent 'skip_ocr' signal to FastAPI for PDF.`)
-            }
+            //     // Send a minimal payload to the backend to signal insertion of an empty row
+            //     await axios.post(API_URL, {
+            //         // Flag to tell the Python backend to insert an empty row
+            //         skip_ocr: true,
+            //         file_type: 'PDF',
+            //         sender_jid: senderJid,
+            //         message_id: message.key.id,
+            //         group_name: groupName,
+            //         sent_at: sentAt
+            //     });
+            //     console.log(`✅ Sent 'skip_ocr' signal to FastAPI for PDF.`)
+            // }
             //new addition for pdf
 
 

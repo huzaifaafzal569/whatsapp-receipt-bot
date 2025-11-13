@@ -152,47 +152,47 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
     """Process receipt image and extract structured data."""
 
 
-    # ----------------------------------------------------------------------
-    # 🚨 NEW LOGIC: Check for PDF / Skip OCR Flag
-    # ----------------------------------------------------------------------
-    if metadata.get('skip_ocr', False):
-        logger.info(f"📄 Skipping OCR for file type: {metadata.get('file_type', 'Unknown')}. Inserting empty row...")
+    # # ----------------------------------------------------------------------
+    # # 🚨 NEW LOGIC: Check for PDF / Skip OCR Flag
+    # # ----------------------------------------------------------------------
+    # if metadata.get('skip_ocr', False):
+    #     logger.info(f"📄 Skipping OCR for file type: {metadata.get('file_type', 'Unknown')}. Inserting empty row...")
         
-        # Build the empty row data structure
-        empty_row_data = {
-            'Receipt_Date': None,
-            'Amount': '0,00', 
-            'Sender_CUIT': 'N/A',
-            'Transaction_Number': f"{metadata.get('file_type', 'PDF')} Received",
-            'Supplier': 'N/A',
-            'Destination_Bank': 'N/A',
-            'WhatsApp_Group': metadata.get('group_name') or 'Unknown Group',
-            'Receipt_Sent_Time': metadata.get('sent_at') or time.time(),
-            'Image_Link': f'SKIPPED: {metadata.get("file_type", "PDF")}' # Use this column to flag the event
-        }
+    #     # Build the empty row data structure
+    #     empty_row_data = {
+    #         'Receipt_Date': None,
+    #         'Amount': '0,00', 
+    #         'Sender_CUIT': 'N/A',
+    #         'Transaction_Number': f"{metadata.get('file_type', 'PDF')} Received",
+    #         'Supplier': 'N/A',
+    #         'Destination_Bank': 'N/A',
+    #         'WhatsApp_Group': metadata.get('group_name') or 'Unknown Group',
+    #         'Receipt_Sent_Time': metadata.get('sent_at') or time.time(),
+    #         'Image_Link': f'SKIPPED: {metadata.get("file_type", "PDF")}' # Use this column to flag the event
+    #     }
 
-        # Map to sheet order
-        sheet_row = [
-            empty_row_data['Receipt_Date'],
-            empty_row_data['Amount'],
-            empty_row_data['Sender_CUIT'],
-            empty_row_data['Transaction_Number'],
-            empty_row_data['Supplier'],
-            empty_row_data['Destination_Bank'],
-            empty_row_data['WhatsApp_Group'],
-            empty_row_data['Receipt_Sent_Time'],
-            empty_row_data['Image_Link']
-        ]
+    #     # Map to sheet order
+    #     sheet_row = [
+    #         empty_row_data['Receipt_Date'],
+    #         empty_row_data['Amount'],
+    #         empty_row_data['Sender_CUIT'],
+    #         empty_row_data['Transaction_Number'],
+    #         empty_row_data['Supplier'],
+    #         empty_row_data['Destination_Bank'],
+    #         empty_row_data['WhatsApp_Group'],
+    #         empty_row_data['Receipt_Sent_Time'],
+    #         empty_row_data['Image_Link']
+    #     ]
         
-        # Write to Sheet
-        SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID', '1u3M6OKKg08A0SA_Sz-hhDn4aVmbbG27Rl8msOKFFxpI')
-        try:
-            write_row(spreadsheet_id=SPREADSHEET_ID,row_values=sheet_row,sheet_base_name="botnogal",max_rows=1000)
-            logger.info("✅ Wrote empty row to Google Sheets for skipped file.")
-        except Exception as e:
-            logger.error(f"Failed to write empty row to Google Sheets: {e}")
+    #     # Write to Sheet
+    #     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID', '1u3M6OKKg08A0SA_Sz-hhDn4aVmbbG27Rl8msOKFFxpI')
+    #     try:
+    #         write_row(spreadsheet_id=SPREADSHEET_ID,row_values=sheet_row,sheet_base_name="botnogal",max_rows=1000)
+    #         logger.info("✅ Wrote empty row to Google Sheets for skipped file.")
+    #     except Exception as e:
+    #         logger.error(f"Failed to write empty row to Google Sheets: {e}")
             
-        return {"status": "success", "message": f"Empty row inserted for {metadata.get('file_type', 'PDF')}"}
+    #     return {"status": "success", "message": f"Empty row inserted for {metadata.get('file_type', 'PDF')}"}
     # ----------------------------------------------------------------------
     
     # Ensure image_base64 is present for the rest of the OCR logic
