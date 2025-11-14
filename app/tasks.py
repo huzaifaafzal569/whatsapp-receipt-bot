@@ -379,6 +379,11 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
                 code = norm_code(bank_code)
                 extracted_data['Destination_Bank'] = destino_map.get(code)
                 logger.info(f"'para' section 22-digit CBU found -> bank_code:{bank_code} normalized:{code} bank:{extracted_data['Destination_Bank']}")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="transgestiona" or extracted_data.get('Supplier', '').lower()=="transgestiona S A") and ("0110074720007400875197" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Nacion"
+            logger.info("No 'para' and supplier transgestiona -> set Nacion")
     
     if not extracted_data['Destination_Bank']:
         if extracted_data.get('Supplier', '').lower()=="transgestiona" or extracted_data.get('Supplier', '').lower()=="transgestiona S A":
@@ -391,9 +396,69 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
             logger.info("No 'para' and supplier Cobro Sur Sa -> set Hipotecario")
 
     if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="prestigio pagos")and "0440000430000010401791" in cleaned_text:
+            extracted_data['Destination_Bank'] = "Hipotecario"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Hipotecario")
+    
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="prestigio pagos")and "0000053600000033387693" in cleaned_text:
+            extracted_data['Destination_Bank'] = "Agil Pagos"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Agil Pagos")
+
+    if not extracted_data['Destination_Bank']:
         if extracted_data.get('Supplier', '').lower()=="prestigio pagos" or extracted_data.get('Supplier', '').lower()=="prestigio pagos sa":
             extracted_data['Destination_Bank'] = "Agil Pagos"
             logger.info("No 'para' and supplier Cobro Sur Sa -> set Agil Pagos")
+    
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="aurinegros sa" or extracted_data.get('Supplier', '').lower()=="aurinegros")and ("044000043" in cleaned_text or "0440000044" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Hipotecario"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Agil Pagos")
+    
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="aurinegros sa" or extracted_data.get('Supplier', '').lower()=="aurinegros")and ("0110001320000100574191" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Nacion"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Nacion")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="aurinegros sa" or extracted_data.get('Supplier', '').lower()=="aurinegros")and ("0290031500000502572582" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Ciudad"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Ciudad")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="raz y cia sa" or extracted_data.get('Supplier', '').lower()=="raz y cia")and ("0070158320000001103504" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Galicia"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Galicia")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="clan srl" or extracted_data.get('Supplier', '').lower()=="clan")and ("0720039720000000390554" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Santander"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Santander")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="clan srl" or extracted_data.get('Supplier', '').lower()=="caln")and ("2850302630094201041381" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Macro"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Macro")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="clan srl" or extracted_data.get('Supplier', '').lower()=="clan")and ("1910233555023300527178" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Credicoop nueva"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Credicoop nueva")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="plataforma de" or extracted_data.get('Supplier', '').lower()=="plataforma de pago sa")and ("2850759230094207764521" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Macro"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Macro")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="plataforma de" or extracted_data.get('Supplier', '').lower()=="plataforma de pago sa")and ("0110074720007400875197" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Nacion"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Nacion")
+
+    if not extracted_data['Destination_Bank']:
+        if (extracted_data.get('Supplier', '').lower()=="plataforma de" or extracted_data.get('Supplier', '').lower()=="plataforma de pago sa")and ("0290031500000502079632" in cleaned_text):
+            extracted_data['Destination_Bank'] = "Ciudad"
+            logger.info("No 'para' and supplier Cobro Sur Sa -> set Ciudad")
 
     
 

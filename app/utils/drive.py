@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # The scope for uploading files to your own Drive
-SCOPES = ['https://www.googleapis.com/auth/drive.file']  # Only allows access to files created by the app
+SCOPES = ['https://www.googleapis.com/auth/drive']  # Only allows access to files created by the app
 
 # Environment variables expected:
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_TOKEN, GOOGLE_REFRESH_TOKEN, DRIVE_FOLDER_ID (optional)
