@@ -3,6 +3,8 @@
 
 # Ignore credentials and private keys
 credentials.json
+new_token.json
+generate_token.py
 
 # Python cache
 __pycache__/
