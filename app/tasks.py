@@ -4,6 +4,7 @@ from celery import Celery
 import cv2
 import numpy as np
 from paddleocr import PaddleOCR
+# from deepseek_ocr import DeepSeekOCR
 import os
 import re
 import logging
@@ -479,7 +480,8 @@ def process_receipt(image_base64: str, metadata: Dict[str, Any]) -> Dict[str, An
         r'|\b\d{1,2}[-/](?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*[-/]\d{2,4}\b' # <-- NEW HYBRID FORMAT
         r'|\b(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo)?[,]?\s*\d{1,2}\s*(?:de\s+)?(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\w*\s*(?:de\s+)?\d{4})',
 
-    'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*(\d+(?:[.,]\d+)+)',
+    # 'amount': r'(?:\$|PESOS|IMPORTE|MONTO|TOTAL|PAGO)\s*[:$]?\s*(\d+(?:[.,]\d+)+)',
+    'amount': r'(?:(?:IMPORTE|PESOS|MONTO|TOTAL|PAGO)\s*[:$]?\s*|[\$])?\s*(\d+(?:[.,]\d+)+)(?:\s*[\$]|\s*|\s*\d+)?',
 
     
     # CUIT: same as before
